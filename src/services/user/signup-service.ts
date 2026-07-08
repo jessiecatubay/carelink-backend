@@ -1,4 +1,4 @@
-import { UserRepository } from "../../repositories/user.repository";
+import { UserRepository } from "@/repositories/user.repository";
 import { UserData } from "@/types/user"
 
 export async function SignupService(data: UserData) {

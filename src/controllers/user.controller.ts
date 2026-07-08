@@ -1,5 +1,4 @@
-import { SignupService } from "../services/user/signup-service";
-import { LoginService } from "../services/user/login-service";
+import { SignupService, LoginService, UpdateUserService } from "@/services/user"
 import { Request, Response } from "express";
 import { UserData } from "@/types/user";
 
@@ -16,6 +15,15 @@ export class UserController {
     const data: Partial<UserData> = req.body;
 
     const result = await LoginService(data);
+
+    return res.status(result.code).json(result);
+  }
+
+  public update = async(req: Request, res: Response) => {
+    const email = req.body.email;
+    const data: Partial<UserData> = req.body;
+
+    const result = await UpdateUserService(email, data);
 
     return res.status(result.code).json(result);
   }
