@@ -1,5 +1,12 @@
+import { Role } from "@/generated/prisma/enums";
+
 export interface UserData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
+  role: Role;
+  phone: string;
+  relationship: string;
+  verifiedAt: Date;
 }
