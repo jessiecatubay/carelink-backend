@@ -9,4 +9,8 @@ export class UserRepository {
   async findByEmail(email: string) {
     return await prisma.user.findFirst({ where: { email } });
   }
+
+  async update(email: string, data: Partial<UserData>) {
+    return await prisma.user.update({ where: { email }, data, });
+  }
 }

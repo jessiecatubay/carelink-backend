@@ -12,20 +12,12 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  PATIENT
-  CAREGIVER
-}
-
 model User {
   id String @id @default(uuid())
   firstName String?
   lastName String?
   email String? @unique
   password String?
-  role Role @default(PATIENT)
-  phone String?
-  relationship String?
-  verifiedAt DateTime? @map("email_verified")
+  onBoarded Boolean @default(false)
   createdAt DateTime @default(now())
 }
