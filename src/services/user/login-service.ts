@@ -1,22 +1,19 @@
 import { UserRepository } from "@/repositories/user.repository";
 import { UserData } from "@/types/user";
+import { verifyPassword } from "@/utils/password";
 
-export async function LoginService(data: Partial<UserData>) {
+export async function LoginService(email: string, password: string) {
   const userRepository = new UserRepository();
 
   try {
-    if (!data.email) {
+    if (!email) {
       return { code: 400, status: "error", message: "Email is required" };
     }
 
-    const userExist = await userRepository.findByEmail(data.email);
+    const user = await userRepository.findByEmail(email);
 
-    if(!userExist) {
-      return { code: 404, status: "error", message: "User does not exist" };
-    }
-
-    if(userExist.password !== data.password){
-      return { code: 401, status: "error", message: "Wrong password" };
+    if (!user || !user.password || !verifyPassword(password, user.password)) {
+      return { code: 400, status: "error", message: "Invalid Credentials" };
     }
 
     return { code: 200, status: "success", message: "Login Successfully" };
