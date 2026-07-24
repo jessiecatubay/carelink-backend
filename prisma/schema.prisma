@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,44 +7,40 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  PATIENT
-  CAREGIVER
-}
-
 model User {
-  id String @id @default(uuid())
-  firstName String?
-  lastName String?
-  email String? @unique
-  password String?
-  role Role @default(PATIENT)
-  onBoarded Boolean @default(false)
-
-  patientProfile PatientProfile[]
-  caregiverProfile CaregiverProfile[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String            @id @default(uuid())
+  email            String?           @unique
+  password         String?
+  createdAt        DateTime          @default(now())
+  firstName        String?
+  lastName         String?
+  role             Role              @default(PATIENT)
+  onBoarded        Boolean           @default(false)
+  updatedAt        DateTime          @updatedAt
+  caregiverProfile CaregiverProfile?
+  patientProfile   PatientProfile?
 }
 
 model PatientProfile {
-  id          String @id @default(uuid())
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id])
-
-  age Int?
-  gender String?
-  notes String?
-  emergencyContact String?
+  id                String  @id @default(uuid())
+  userId            String  @unique
+  age               Int?
+  gender            String?
+  notes             String?
+  emergencyContact  String?
   medicalConditions String?
+  user              User    @relation(fields: [userId], references: [id])
 }
 
 model CaregiverProfile {
-  id          String @id @default(uuid())
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [id])
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  emergencyNumber Int?
+  relationship    String?
+  user            User    @relation(fields: [userId], references: [id])
+}
 
-  emergencyNumber Int
-  relationship String
+enum Role {
+  PATIENT
+  CAREGIVER
 }
