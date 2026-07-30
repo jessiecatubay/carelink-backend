@@ -42,6 +42,7 @@ export async function SignupService(
           lastName: user.lastName,
           email: user.email,
           role: user.role,
+          onBoarded: user.onBoarded,
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

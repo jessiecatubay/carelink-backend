@@ -8,3 +8,8 @@ export interface UserData {
   role?: Role;
   onBoarded?: boolean;
 }
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}

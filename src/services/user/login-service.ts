@@ -1,4 +1,5 @@
 import { UserRepository } from "@/repositories/user.repository";
+import { LoginInput } from "@/schema/auth.schema";
 import { generateTokens } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
 
@@ -18,7 +19,7 @@ export async function LoginService(input: LoginInput) {
 
     const tokens = generateTokens({
       id: user.id,
-      email: user.email ?? email,
+      email: user.email ?? input.email,
       role: user.role ?? "PATIENT",
     });
 
@@ -33,6 +34,7 @@ export async function LoginService(input: LoginInput) {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
+          onBoarded: user.onBoarded,
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
