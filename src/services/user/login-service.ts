@@ -2,17 +2,17 @@ import { UserRepository } from "@/repositories/user.repository";
 import { generateTokens } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
 
-export async function LoginService(email: string, password: string) {
+export async function LoginService(input: LoginInput) {
   const userRepository = new UserRepository();
 
   try {
-    if (!email) {
-      return { code: 400, status: "error", message: "Email is required" };
-    }
+    const user = await userRepository.findByEmail(input.email);
 
-    const user = await userRepository.findByEmail(email);
-
-    if (!user || !user.password || !verifyPassword(password, user.password)) {
+    if (
+      !user ||
+      !user.password ||
+      !verifyPassword(input.password, user.password)
+    ) {
       return { code: 400, status: "error", message: "Invalid Credentials" };
     }
 
