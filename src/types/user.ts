@@ -5,4 +5,6 @@ export interface UserData {
   lastName?: string;
   email?: string;
   password?: string;
+  role?: Role;
+  onBoarded?: boolean;
 }
