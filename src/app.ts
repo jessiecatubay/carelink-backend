@@ -5,7 +5,12 @@ const app: Application = express();
 import routes from "@/routes";
 
 // Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/api", routes);
 

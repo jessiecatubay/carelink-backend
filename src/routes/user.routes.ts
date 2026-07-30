@@ -1,6 +1,13 @@
 import { UserController } from "../controllers/user.controller";
 import { Router } from "express";
 import { Request, Response } from "express";
+import { validateSchema } from "@/middlewares/validate-schema";
+import {
+  loginSchema,
+  refreshSchema,
+  signupSchema,
+} from "@/schemas/user.schema";
+import { authenticateToken } from "@/middlewares/authenticate-token";
 
 const router = Router();
 const userController = new UserController();
@@ -8,8 +15,8 @@ const userController = new UserController();
 router.post("/v1/signup", userController.signup);
 router.get("/v1/test", (req: Request, res: Response) => {
   return res.send("Hello");
-})
-router.post("/v1/login", userController.login);
+});
+router.post("/v1/login", validateSchema(loginSchema), userController.login);
 router.post(
   "/v1/refresh",
   validateSchema(refreshSchema),
