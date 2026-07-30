@@ -11,6 +11,13 @@ export class UserRepository {
   }
 
   async update(email: string, data: Partial<UserData>) {
-    return await prisma.user.update({ where: { email }, data, });
+    return await prisma.user.update({ where: { email }, data });
+  }
+
+  async onBoardUser(email: string) {
+    return await prisma.user.update({
+      where: { email },
+      data: { onBoarded: true }
+    });
   }
 }

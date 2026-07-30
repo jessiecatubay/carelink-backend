@@ -7,7 +7,7 @@ import routes from "@/routes";
 // Middlewares
 app.use(
   cors({
-    origin: "http://localhost:8081",
+    origin: true,
     credentials: true,
   })
 );

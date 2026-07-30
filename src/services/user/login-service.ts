@@ -1,6 +1,5 @@
 import { UserRepository } from "@/repositories/user.repository";
-import { generateTokens } from "@/middleware/auth.middleware";
-import type { LoginInput } from "@/schema/auth.schema";
+import { generateTokens } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
 
 export async function LoginService(input: LoginInput) {
@@ -19,7 +18,7 @@ export async function LoginService(input: LoginInput) {
 
     const tokens = generateTokens({
       id: user.id,
-      email: user.email ?? input.email,
+      email: user.email ?? email,
       role: user.role ?? "PATIENT",
     });
 
