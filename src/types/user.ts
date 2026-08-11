@@ -13,3 +13,9 @@ export interface LoginInput {
   email: string;
   password: string;
 }
+
+export interface DeviceData {
+  deviceId: string;
+  temperature: number;
+  heartRate: number;
+}

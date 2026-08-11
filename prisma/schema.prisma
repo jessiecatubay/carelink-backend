@@ -7,6 +7,11 @@ datasource db {
   provider = "postgresql"
 }
 
+
+// =====================================================
+// USER
+// =====================================================
+
 model User {
   id               String            @id @default(uuid())
   email            String?           @unique
@@ -14,12 +19,18 @@ model User {
   createdAt        DateTime          @default(now())
   firstName        String?
   lastName         String?
-  role             Role              @default(PATIENT)
+  role             Role              @default(USER)
   onBoarded        Boolean           @default(false)
   updatedAt        DateTime          @updatedAt
+
   caregiverProfile CaregiverProfile?
   patientProfile   PatientProfile?
 }
+
+
+// =====================================================
+// PATIENT
+// =====================================================
 
 model PatientProfile {
   id                String  @id @default(uuid())
@@ -29,18 +40,89 @@ model PatientProfile {
   notes             String?
   emergencyContact  String?
   medicalConditions String?
-  user              User    @relation(fields: [userId], references: [id])
+
+  user              User     @relation(fields: [userId], references: [id])
+
+  devices           Device[]
 }
 
+
+// =====================================================
+// CAREGIVER
+// =====================================================
+
 model CaregiverProfile {
-  id              String  @id @default(uuid())
-  userId          String  @unique
-  emergencyNumber Int?
-  relationship    String?
-  user            User    @relation(fields: [userId], references: [id])
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  emergencyNumber  Int?
+  relationship     String?
+
+  user             User     @relation(fields: [userId], references: [id])
 }
+
+
+// =====================================================
+// DEVICE
+// =====================================================
+
+model Device {
+  id          String   @id @default(uuid())
+
+  // ID programmed into the ESP32
+  deviceId    String   @unique
+
+  // Optional human-readable name
+  name        String?
+
+  // Example: WRIST_STRAP
+  type        String   @default("WRIST_STRAP")
+
+  // Device ownership
+  patientId   String
+  patient     PatientProfile @relation(fields: [patientId],references: [id])
+
+  // Vital history
+  vitalReadings VitalReadings[]
+
+  // Device status
+  lastSeenAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+
+// =====================================================
+// VITAL READINGS
+// =====================================================
+
+model VitalReadings {
+  id          String   @id @default(uuid())
+
+  // Which device produced this reading?
+  deviceId    String
+
+  device      Device   @relation(fields: [deviceId],references: [id])
+
+  // Vital measurements
+  temperature Float
+  heartRate   Int
+
+  // When the measurement was taken
+  recordedAt  DateTime @default(now())
+
+  @@index([deviceId, recordedAt])
+}
+
+
+// =====================================================
+// USER ROLE
+// =====================================================
 
 enum Role {
   PATIENT
   CAREGIVER
+  USER
 }

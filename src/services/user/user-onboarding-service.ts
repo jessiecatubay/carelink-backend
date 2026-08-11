@@ -21,10 +21,10 @@ export async function UserOnboardingService(email: string, role: Role) {
 
     console.log(role)
 
-    await userRepository.update(email, updateData);
+    const data = await userRepository.update(email, updateData);
     await userRepository.onBoardUser(email);
 
-    return { code: 200, status: "success", message: "User onboarded successfully" };
+    return { code: 200, status: "success", message: "User onboarded successfully", data: data};
   } catch (error) {
     console.error("Error occurred while onboarding user:", error);
     return { code: 500, status: "error", message: "Unable to onboard user" }

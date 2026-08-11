@@ -9,7 +9,7 @@ import { UserData } from "@/types/user";
 import {
   generateTokens,
   verifyRefreshToken,
-} from "@/middleware/auth.middleware";
+} from "@/middlewares/authenticate-token";
 
 export class UserController {
   public signup = async (req: Request, res: Response) => {
