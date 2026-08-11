@@ -1,27 +1,17 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import cors from "cors";
+import routes from "@/routes";
 
 const app: Application = express();
-import routes from "@/routes";
 
 // Middlewares
 app.use(
   cors({
     origin: true,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use("/api", routes);
-
-
-// Test Endpoint
-app.get("/api/test", (req: Request, res: Response) => {
-    res.status(200).json({
-        success: true,
-        message: "Express TypeScript backend is working!",
-        timestamp: new Date().toISOString()
-    });
-});
 
 export default app;

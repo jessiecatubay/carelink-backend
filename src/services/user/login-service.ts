@@ -1,5 +1,5 @@
 import { UserRepository } from "@/repositories/user.repository";
-import { LoginInput } from "@/schema/auth.schema";
+import { LoginInput } from "@/types/user";
 import { generateTokens } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
 
