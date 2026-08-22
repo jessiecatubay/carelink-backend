@@ -9,4 +9,13 @@ export class VitalsRepository {
   async get() {
     return await prisma.vitalReadings.findMany();
   }
+
+  async getRecent() {
+    return await prisma.vitalReadings.findMany({
+      take: 5,
+      orderBy: {
+        recordedAt: "desc"
+      }
+    })
+  }
 }
