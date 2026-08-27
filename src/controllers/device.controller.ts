@@ -6,6 +6,7 @@ import {
   CreateVitalsHistoryService,
   GetRecentVitalsHistoryService
 } from "@/services/device";
+import { SendDeviceCommand } from "@/services/mqtt.service";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
@@ -45,5 +46,15 @@ export class DeviceController {
     const result = await GetRecentVitalsHistoryService();
 
     return res.status(result.code).json(result);
+  }
+
+  public command = async (req: Request, res: Response) => {
+    const { deviceId, command } = req.body;
+    console.log(deviceId);
+    console.log(command);
+
+    const result = SendDeviceCommand(deviceId, command);
+
+    return res.status(200).json(result);
   }
 }
