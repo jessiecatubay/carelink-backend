@@ -22,6 +22,7 @@
     "crypto": "^1.0.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "mqtt": "^5.15.2",
     "nodemailer": "^9.0.3",
     "pg": "^8.21.0",
     "socket.io": "^4.8.3",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/mqtt": "^0.0.34",
     "@types/node": "^25.9.5",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
@@ -40,8 +42,8 @@
     "typescript": "^6.0.3"
   },
   "allowScripts": {
-    "esbuild@0.28.0": true,
-    "prisma@7.8.0": true,
-    "@prisma/engines@7.8.0": true
+    "prisma@7.10.0": true,
+    "@prisma/engines@7.10.0": true,
+    "esbuild@0.28.2": true
   }
 }

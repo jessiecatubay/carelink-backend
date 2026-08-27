@@ -7,6 +7,8 @@ const PORT = process.env.PORT || 8000;
 const httpServer = createServer(app);
 const io = initSocket(httpServer);
 
+import "./services/mqtt.service";
+
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
