@@ -7,15 +7,16 @@ import {
   GetRecentVitalsHistoryService
 } from "@/services/device";
 import { SendDeviceCommand } from "@/services/mqtt.service";
+import { CreateCommandService } from "@/services/remote";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
-    const { deviceId, temperature, heartRate } = req.body as DeviceData;
+    const { deviceId, temperature, heartRate, sensorContact } = req.body as DeviceData;
     const receivedAt = new Date().toISOString();
 
-    console.log("Received device vitals:", { deviceId, temperature, heartRate }, "receivedAt", receivedAt);
+    console.log("Received device vitals:", { deviceId, temperature, heartRate, sensorContact }, "receivedAt", receivedAt);
 
-    await CreateVitalsHistoryService(deviceId, temperature, heartRate);
+    await CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact);
 
     const payload = {
       ...{ deviceId, temperature, heartRate },
@@ -54,6 +55,7 @@ export class DeviceController {
     console.log(command);
 
     const result = SendDeviceCommand(deviceId, command);
+    await CreateCommandService(deviceId, command);
 
     return res.status(200).json(result);
   }
