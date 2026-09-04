@@ -4,19 +4,30 @@ import { getSocket } from "@/lib/socket";
 import {
   GetVitalsHistoryService,
   CreateVitalsHistoryService,
-  GetRecentVitalsHistoryService
+  GetRecentVitalsHistoryService,
 } from "@/services/device";
 import { SendDeviceCommand } from "@/services/mqtt.service";
-import { CreateCommandService } from "@/services/remote";
+import { CreateCommandService } from "@/services/command";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
-    const { deviceId, temperature, heartRate, sensorContact } = req.body as DeviceData;
+    const { deviceId, temperature, heartRate, sensorContact } =
+      req.body as DeviceData;
     const receivedAt = new Date().toISOString();
 
-    console.log("Received device vitals:", { deviceId, temperature, heartRate, sensorContact }, "receivedAt", receivedAt);
+    console.log(
+      "Received device vitals:",
+      { deviceId, temperature, heartRate, sensorContact },
+      "receivedAt",
+      receivedAt,
+    );
 
-    await CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact);
+    await CreateVitalsHistoryService(
+      deviceId,
+      temperature,
+      heartRate,
+      sensorContact,
+    );
 
     const payload = {
       ...{ deviceId, temperature, heartRate },
@@ -41,13 +52,13 @@ export class DeviceController {
     const result = await GetVitalsHistoryService();
 
     return res.status(result.code).json(result);
-  }
+  };
 
   public getRecentPatientVitals = async (req: Request, res: Response) => {
     const result = await GetRecentVitalsHistoryService();
 
     return res.status(result.code).json(result);
-  }
+  };
 
   public command = async (req: Request, res: Response) => {
     const { deviceId, command } = req.body;
@@ -55,8 +66,28 @@ export class DeviceController {
     console.log(command);
 
     const result = SendDeviceCommand(deviceId, command);
-    await CreateCommandService(deviceId, command);
+    const createdCommand = await CreateCommandService(
+      deviceId,
+      command.toUpperCase(),
+    );
 
-    return res.status(200).json(result);
-  }
+    const payload = {
+      deviceId,
+      command,
+      recordedAt: createdCommand.data?.recordedAt,
+      status: createdCommand.data?.status,
+    };
+
+    try {
+      const io = getSocket();
+      io.emit("patientAlert", payload);
+    } catch (error) {
+      console.error("Socket not initialized: ", error);
+    }
+
+    return res.status(result.success ? 200 : 503).json({
+      ...result,
+      data: payload,
+    });
+  };
 }

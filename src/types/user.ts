@@ -21,7 +21,8 @@ export interface DeviceData {
   sensorContact: boolean;
 }
 
-export interface RemoteData {
-  deviceId: string;
-  command: Command;
+export interface CommandData {
+  deviceId?: string;
+  command?: Command;
+  status?: string;
 }
