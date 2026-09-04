@@ -1,12 +1,12 @@
 import { Router } from "express";
 import userRoutes from "./user.routes"
 import deviceRoutes from "./device.routes";
-import remoteRoutes from "./remote.routes";
+import commandRoutes from "./command.routes";
 
 const router = Router();
 
 router.use("/user", userRoutes);
 router.use("/device", deviceRoutes);
-router.use("/remote", remoteRoutes);
+router.use("/command", commandRoutes);
 
 export default router

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Commands" ALTER COLUMN "command" DROP NOT NULL,
+ALTER COLUMN "deviceId" DROP NOT NULL;

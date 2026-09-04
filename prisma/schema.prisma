@@ -51,12 +51,12 @@ model VitalReadings {
   @@index([deviceId, recordedAt])
 }
 
-model Remote {
+model Commands {
   id         String   @id @default(dbgenerated("gen_random_uuid()"))
-  command    Command
-  status     String   @default("Pending")
+  command    Command?
+  status     String?   @default("Pending")
   recordedAt DateTime @default(now())
-  deviceId   String
+  deviceId   String?
 }
 
 enum Role {
