@@ -2,6 +2,7 @@ import {
   SignupService,
   LoginService,
   UpdateUserService,
+  GetUserByIdService
 } from "@/services/user";
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
@@ -12,6 +13,14 @@ import {
 } from "@/middlewares/authenticate-token";
 
 export class UserController {
+  public getById = async (req: Request, res: Response) => {
+    const { id } = req.body;
+
+    const result = await GetUserByIdService(id);
+    
+    return res.status(result.code).json(result);
+  }
+
   public signup = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
     const result = await SignupService(firstName, lastName, email, password);

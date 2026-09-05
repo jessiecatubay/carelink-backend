@@ -26,3 +26,20 @@ export interface CommandData {
   command?: Command;
   status?: string;
 }
+
+export interface PatientNonPatient {
+  patientId: string;
+  nonPatientId: string;
+  status: "CONNECTED" | "DISCONNECTED";
+}
+
+export interface PatientProfile {
+  id: string;
+  userId: string;
+  connectionCode: string;
+  age: number | null;
+  gender: string | null;
+  notes: string | null;
+  emergencyContact: string | null;
+  medicalConditions: string | null;
+}
