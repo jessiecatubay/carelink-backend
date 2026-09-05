@@ -17,8 +17,12 @@ model User {
   role             Role              @default(USER)
   onBoarded        Boolean           @default(false)
   updatedAt        DateTime          @updatedAt
-  caregiverProfile CaregiverProfile?
-  patientProfile   PatientProfile?
+
+  nonPatientProfile NonPatientProfile?
+  patientProfile    PatientProfile?
+
+  patientConnections    PatientNonPatient[] @relation("PatientConnections")
+  nonPatientConnections PatientNonPatient[] @relation("NonPatientConnections")
 }
 
 model PatientProfile {
@@ -27,17 +31,41 @@ model PatientProfile {
   age               Int?
   gender            String?
   notes             String?
+  connectionCode    String? @unique
   emergencyContact  String?
   medicalConditions String?
+  currentPatient    Boolean @default(false)
+
   user              User    @relation(fields: [userId], references: [id])
 }
 
-model CaregiverProfile {
+model NonPatientProfile {
   id              String  @id @default(uuid())
   userId          String  @unique
-  emergencyNumber Int?
+  emergencyContact String?
   relationship    String?
   user            User    @relation(fields: [userId], references: [id])
+}
+
+model PatientNonPatient {
+  id           String   @id @default(uuid())
+  patientId    String
+  nonPatientId String
+  status      ConnectionStatus @default(DISCONNECTED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient    User @relation("PatientConnections", fields: [patientId], references: [id], onDelete: Cascade)
+  nonPatient User @relation("NonPatientConnections", fields: [nonPatientId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, nonPatientId])
+  @@index([patientId])
+  @@index([nonPatientId])
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
 }
 
 model VitalReadings {
@@ -61,7 +89,7 @@ model Commands {
 
 enum Role {
   PATIENT
-  CAREGIVER
+  NON_PATIENT
   USER
 }
 
