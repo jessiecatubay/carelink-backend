@@ -19,7 +19,21 @@ export async function ConnectPatientNonpatientService(
         message: "Missing Data",
       };
     }
-    
+
+    const isConnected = await patientNonpatientRepository.findConnection(
+      patientId.userId,
+      nonPatientId,
+    );
+
+    if (isConnected) {
+      return {
+        code: 500,
+        status: "error",
+        message: "Patient and non-patient are already connected",
+        connection: isConnected,
+      };
+    }
+
     await patientNonpatientRepository.create({
       patientId: patientId.userId,
       nonPatientId,

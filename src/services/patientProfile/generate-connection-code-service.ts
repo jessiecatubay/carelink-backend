@@ -12,7 +12,10 @@ export async function GenerateConnectionCodeService(id: string) {
     return {
       code: 200,
       status: "success",
-      message: "Successfully generated connection code"
+      message: "Successfully generated connection code",
+      data: {
+        generatedCode: code
+      }
     }
   } catch (error) {
     return {

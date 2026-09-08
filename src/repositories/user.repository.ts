@@ -49,6 +49,10 @@ export class UserRepository {
         where: {
           id: id,
         },
+        include: {
+          patientProfile: true,
+          nonPatientProfile: true
+        }
       });
     }
   }

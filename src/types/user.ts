@@ -25,6 +25,7 @@ export interface CommandData {
   deviceId?: string;
   command?: Command;
   status?: string;
+  patientId: string;
 }
 
 export interface PatientNonPatient {

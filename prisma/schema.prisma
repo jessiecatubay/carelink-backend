@@ -23,6 +23,8 @@ model User {
 
   patientConnections    PatientNonPatient[] @relation("PatientConnections")
   nonPatientConnections PatientNonPatient[] @relation("NonPatientConnections")
+
+  commands             Commands[]
 }
 
 model PatientProfile {
@@ -82,9 +84,14 @@ model VitalReadings {
 model Commands {
   id         String   @id @default(dbgenerated("gen_random_uuid()"))
   command    Command?
-  status     String?   @default("Pending")
+  status     String?  @default("Pending")
+  patientId  String
   recordedAt DateTime @default(now())
   deviceId   String?
+
+  patient    User @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
 }
 
 enum Role {
