@@ -15,6 +15,7 @@ import {
 export class UserController {
   public getById = async (req: Request, res: Response) => {
     const { id } = req.body;
+    console.log(id);
 
     const result = await GetUserByIdService(id);
     

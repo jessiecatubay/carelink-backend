@@ -88,7 +88,7 @@ mqttClient.on("close", () => {
 // SEND DEVICE COMMAND
 // =====================================================
 
-export function SendDeviceCommand(deviceId: string, command: string) {
+export function SendDeviceCommand(deviceId: string, command: string, patientId: string) {
   // ---------------------------------------------------
   // MQTT topic
   // ---------------------------------------------------

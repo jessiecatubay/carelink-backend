@@ -61,14 +61,14 @@ export class DeviceController {
   };
 
   public command = async (req: Request, res: Response) => {
-    const { deviceId, command } = req.body;
-    console.log(deviceId);
-    console.log(command);
+    const { deviceId, command, patientId } = req.body;
+    console.log(deviceId, command, patientId);
 
-    const result = SendDeviceCommand(deviceId, command);
+    const result = SendDeviceCommand(deviceId, command, patientId);
     const createdCommand = await CreateCommandService(
       deviceId,
       command.toUpperCase(),
+      patientId,
     );
 
     const payload = {
@@ -80,7 +80,14 @@ export class DeviceController {
 
     try {
       const io = getSocket();
+
+      console.log("Connected clients:", io.sockets.sockets.size);
+
+      console.log("Emitting patientAlert:", payload);
+
       io.emit("patientAlert", payload);
+
+      console.log("patientAlert emitted");
     } catch (error) {
       console.error("Socket not initialized: ", error);
     }

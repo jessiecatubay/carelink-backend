@@ -1,7 +1,7 @@
 import { CommandRepository } from "@/repositories/command.repository";
 import { CommandData } from "@/types/user";
 
-export async function UpdateLatestCommandService (data: CommandData) {
+export async function UpdateLatestCommandService(data: Partial<CommandData>) {
   const commandRepository = new CommandRepository();
 
   try {
@@ -10,13 +10,13 @@ export async function UpdateLatestCommandService (data: CommandData) {
     return {
       code: 200,
       status: "success",
-      message: "Successfully updated latest command"
-    }
+      message: "Successfully updated latest command",
+    };
   } catch (error) {
     return {
       code: 500,
       status: "error",
-      message: "Unable to update latest command"
-    }
+      message: "Unable to update latest command",
+    };
   }
 }
