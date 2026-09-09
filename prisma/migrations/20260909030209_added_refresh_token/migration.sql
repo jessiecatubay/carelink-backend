@@ -1,0 +1,2 @@
+-- CreateEnum
+CREATE TYPE "TokenType" AS ENUM ('REFRESH', 'EMAIL_VERIFY', 'PASSWORD_RESET');

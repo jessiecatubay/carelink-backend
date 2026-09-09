@@ -2,15 +2,14 @@ import {
   SignupService,
   LoginService,
   UpdateUserService,
-  GetUserByIdService
+  GetUserByIdService,
 } from "@/services/user";
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
 import { UserData } from "@/types/user";
-import {
-  generateTokens,
-  verifyRefreshToken,
-} from "@/middlewares/authenticate-token";
+import { RefreshTokenService } from "@/services/auth";
+import { GetMeService } from "@/services/auth/get-me-service";
+import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 
 export class UserController {
   public getById = async (req: Request, res: Response) => {
@@ -18,9 +17,9 @@ export class UserController {
     console.log(id);
 
     const result = await GetUserByIdService(id);
-    
+
     return res.status(result.code).json(result);
-  }
+  };
 
   public signup = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
@@ -37,34 +36,11 @@ export class UserController {
   };
 
   public refresh = async (req: Request, res: Response) => {
-    try {
-      const { refreshToken } = req.body;
-      const payload = verifyRefreshToken(refreshToken);
+    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+    const result = await RefreshTokenService(refreshToken);
 
-      const tokens = generateTokens({
-        id: payload.id,
-        email: payload.email,
-        role: payload.role ?? "PATIENT",
-      });
-
-      return res.status(200).json({
-        code: 200,
-        status: "success",
-        message: "Tokens refreshed successfully",
-        data: {
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        },
-      });
-    } catch (error) {
-      return res.status(401).json({
-        code: 401,
-        status: "error",
-        message: "Invalid or expired refresh token",
-      });
-    }
+    return res.status(result.code).json(result);
   };
-
   public update = async (req: Request, res: Response) => {
     const { email, ...data }: { email: string } & Partial<UserData> = req.body;
 
@@ -74,11 +50,18 @@ export class UserController {
   };
 
   public onBoarded = async (req: Request, res: Response) => {
-    const { email, role } = req.body;
+    const { userId, role } = req.body;
+    console.log(req.body);
     const roleUpper = typeof role === "string" ? role.toUpperCase() : role;
 
-    const result = await UserOnboardingService(email, roleUpper);
+    const result = await UserOnboardingService(userId, roleUpper);
 
+    return res.status(result.code).json(result);
+  };
+
+  public me = async (req: AuthenticatedRequest, res: Response) => {
+    if(!req?.user?.id) return;
+    const result = await GetMeService(req.user.id);
     return res.status(result.code).json(result);
   };
 }
