@@ -2,20 +2,13 @@ import app from "./app";
 import { createServer } from "http";
 import { initSocket } from "@/lib/socket";
 
+import "./services/mqtt.service";
+
 const PORT = process.env.PORT || 8000;
 
 const httpServer = createServer(app);
-const io = initSocket(httpServer);
 
-import "./services/mqtt.service";
-
-io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  socket.on("disconnect", () => {
-    console.log(`Socket disconnected: ${socket.id}`);
-  });
-});
+initSocket(httpServer);
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

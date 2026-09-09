@@ -9,6 +9,7 @@ app.use(
   cors({
     origin: true,
     credentials: true,
+    exposedHeaders: ["X-Access-Token", "X-Refresh-Token"],
   }),
 );
 app.use(express.json());
