@@ -16,7 +16,7 @@ export interface TokenPayload {
 }
 
 export enum TokenExpiry {
-  ACCESS_TOKEN_EXPIRES = "15m",
+  ACCESS_TOKEN_EXPIRES = "7d",
   REFRESH_TOKEN_EXPIRES = "7d",
 }
 

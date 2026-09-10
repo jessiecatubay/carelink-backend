@@ -8,6 +8,7 @@ import {
 } from "@/services/device";
 import { SendDeviceCommand } from "@/services/mqtt.service";
 import { CreateCommandService } from "@/services/command";
+import { emitPatientAlert } from "@/lib/socket";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
@@ -79,15 +80,7 @@ export class DeviceController {
     };
 
     try {
-      const io = getSocket();
-
-      console.log("Connected clients:", io.sockets.sockets.size);
-
-      console.log("Emitting patientAlert:", payload);
-
-      io.emit("patientAlert", payload);
-
-      console.log("patientAlert emitted");
+      emitPatientAlert(patientId, payload);
     } catch (error) {
       console.error("Socket not initialized: ", error);
     }

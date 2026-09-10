@@ -123,6 +123,8 @@ export const initSocket = (server: HttpServer) => {
           },
         });
 
+        console.log("mga connections", connections);
+
         for (const connection of connections) {
           const room = getPatientRoom(connection.patientId);
 
