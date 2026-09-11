@@ -259,6 +259,8 @@ export const emitPatientAlert = (
     patientId,
   });
 
+  console.log(payload);
+
   console.log(`🚨 Alert emitted to ${room}`);
 };
 

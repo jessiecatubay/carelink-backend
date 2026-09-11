@@ -32,30 +32,30 @@ enum Command {
 }
 
 model Token {
-  id         String     @id @default(uuid())
+  id         String    @id @default(uuid())
   type       TokenType
-  token      String     @unique
+  token      String    @unique
   expiresAt  DateTime
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime  @default(now())
   consumedAt DateTime?
   revokedAt  DateTime?
 
-  userId     String
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
 }
 
 model User {
-  id               String            @id @default(uuid())
-  email            String?           @unique
-  password         String?
-  createdAt        DateTime          @default(now())
-  firstName        String?
-  lastName         String?
-  role             Role              @default(USER)
-  onBoarded        Boolean           @default(false)
-  updatedAt        DateTime          @updatedAt
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  password  String?
+  createdAt DateTime @default(now())
+  firstName String?
+  lastName  String?
+  role      Role     @default(USER)
+  onBoarded Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 
   nonPatientProfile NonPatientProfile?
   patientProfile    PatientProfile?
@@ -63,9 +63,10 @@ model User {
   patientConnections    PatientNonPatient[] @relation("PatientConnections")
   nonPatientConnections PatientNonPatient[] @relation("NonPatientConnections")
 
-  commands             Commands[]
+  patientCommands    Commands[] @relation("PatientCommands")
+  nonPatientCommands Commands[] @relation("NonPatientCommands")
 
-  tokens           Token[]
+  tokens Token[]
 }
 
 model PatientProfile {
@@ -79,24 +80,24 @@ model PatientProfile {
   medicalConditions String?
   currentPatient    Boolean @default(false)
 
-  user              User    @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model NonPatientProfile {
-  id              String  @id @default(uuid())
-  userId          String  @unique
+  id               String  @id @default(uuid())
+  userId           String  @unique
   emergencyContact String?
-  relationship    String?
-  user            User    @relation(fields: [userId], references: [id])
+  relationship     String?
+  user             User    @relation(fields: [userId], references: [id])
 }
 
 model PatientNonPatient {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   patientId    String
   nonPatientId String
-  status      ConnectionStatus @default(DISCONNECTED)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status       ConnectionStatus @default(DISCONNECTED)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   patient    User @relation("PatientConnections", fields: [patientId], references: [id], onDelete: Cascade)
   nonPatient User @relation("NonPatientConnections", fields: [nonPatientId], references: [id], onDelete: Cascade)
@@ -118,14 +119,17 @@ model VitalReadings {
 }
 
 model Commands {
-  id         String   @id @default(dbgenerated("gen_random_uuid()"))
-  command    Command?
-  status     String?  @default("Pending")
-  patientId  String
-  recordedAt DateTime @default(now())
-  deviceId   String?
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  command      Command?
+  status       String?  @default("Pending")
+  patientId    String
+  nonPatientId String
+  recordedAt   DateTime @default(now())
+  deviceId     String?
 
-  patient    User @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient    User @relation("PatientCommands", fields: [patientId], references: [id], onDelete: Cascade)
+  nonPatient User @relation("NonPatientCommands", fields: [nonPatientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
+  @@index([nonPatientId])
 }

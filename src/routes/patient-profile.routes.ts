@@ -5,7 +5,7 @@ import { authenticateToken } from "@/middlewares/authenticate-token";
 const router = Router();
 const updatePatientProfileController = new UpdatePatientProfileController();
 
-// router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.post(
   "/v1/update-patient-profile",

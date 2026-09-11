@@ -2,12 +2,19 @@ import { prisma } from "@/lib/prisma";
 import { CommandData } from "@/types/user";
 
 export class CommandRepository {
-  async findAll() {
-    return await prisma.commands.findMany();
+  async findAll(nonPatientId: string) {
+    return await prisma.commands.findMany({
+      where: {
+        nonPatientId: nonPatientId
+      }
+    });
   }
 
-  async findLatest() {
+  async findLatest(nonPatientId: string) {
     return await prisma.commands.findFirst({
+      where: {
+        nonPatientId: nonPatientId,
+      },
       orderBy: {
         recordedAt: 'desc'
       }
@@ -20,6 +27,9 @@ export class CommandRepository {
 
   async updateByLatest(data: Partial<CommandData>) {
     const latest = await prisma.commands.findFirst({
+      where: {
+        patientId: data.patientId,
+      },
       orderBy: {
         recordedAt: 'desc',
       }
@@ -33,8 +43,11 @@ export class CommandRepository {
     })
   }
 
-  async findRecent() {
+  async findRecent(nonPatientId: string) {
     return await prisma.commands.findMany({
+      where: {
+        nonPatientId: nonPatientId,
+      },
       take: 5,
       orderBy: {
         recordedAt: 'desc'

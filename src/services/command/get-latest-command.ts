@@ -1,10 +1,17 @@
 import { CommandRepository } from "@/repositories/command.repository";
 
-export async function GetLatestCommandService () {
+export async function GetLatestCommandService (nonPatientId: string) {
   const commandReposiotry = new CommandRepository();
 
   try {
-    const result = await commandReposiotry.findLatest();
+    if (!nonPatientId) {
+      return {
+        code: 500,
+        status: "error",
+        message: "Missing nonPatientId",
+      };
+    }
+    const result = await commandReposiotry.findLatest(nonPatientId);
 
     return {
       code: 200,
