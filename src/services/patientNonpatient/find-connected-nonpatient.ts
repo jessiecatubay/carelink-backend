@@ -4,6 +4,13 @@ export async function FindConnectedNonpatientService(patientId: string) {
   const patientNonpatientRepository = new PatientNonpatientRepository();
 
   try {
+    if (!patientId) {
+      return {
+        code: 500,
+        status: "error",
+        message: "No patient id",
+      };
+    }
     const result =
       await patientNonpatientRepository.findConnectedNonPatients(patientId);
 

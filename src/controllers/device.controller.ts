@@ -9,6 +9,7 @@ import {
 import { SendDeviceCommand } from "@/services/mqtt.service";
 import { CreateCommandService } from "@/services/command";
 import { emitPatientAlert } from "@/lib/socket";
+import { connected } from "node:process";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
@@ -63,31 +64,43 @@ export class DeviceController {
 
   public command = async (req: Request, res: Response) => {
     const { deviceId, command, patientId } = req.body;
-    console.log(deviceId, command, patientId);
+    console.log("Patient pressed a command", req.body);
+    const connectedNonpatients = JSON.parse(req.body.connectedNonpatients);
 
     const result = SendDeviceCommand(deviceId, command, patientId);
+    const createdCommands = [];
+    const payload = [];
+    for(const nonPatientId of connectedNonpatients){
     const createdCommand = await CreateCommandService(
       deviceId,
       command.toUpperCase(),
       patientId,
+      nonPatientId
     );
 
-    const payload = {
+    createdCommands.push(createdCommand);
+    
+    payload.push({
+      id: createdCommand.data?.id,
       deviceId,
       command,
       recordedAt: createdCommand.data?.recordedAt,
       status: createdCommand.data?.status,
-    };
+    });
+  }
+  
 
     try {
-      emitPatientAlert(patientId, payload);
+      emitPatientAlert(patientId, payload[0]);
     } catch (error) {
       console.error("Socket not initialized: ", error);
     }
+  
+    
 
     return res.status(result.success ? 200 : 503).json({
       ...result,
-      data: payload,
+      data: createdCommands,
     });
   };
 }

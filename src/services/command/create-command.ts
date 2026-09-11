@@ -5,6 +5,7 @@ export async function CreateCommandService(
   deviceId: string,
   command: Command,
   patientId: string,
+  nonPatientId: string
 ) {
   const commandRepository = new CommandRepository();
 
@@ -13,6 +14,7 @@ export async function CreateCommandService(
       deviceId,
       command,
       patientId,
+      nonPatientId
     });
 
     return {

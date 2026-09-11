@@ -1,10 +1,17 @@
 import { CommandRepository } from "@/repositories/command.repository";
 
-export async function GetAllCommandService() {
+export async function GetAllCommandService(nonPatientId: string) {
   const commandRepository = new CommandRepository();
 
   try {
-    const data = await commandRepository.findAll();
+    if (!nonPatientId) {
+      return {
+        code: 500,
+        status: "error",
+        message: "Missing nonPatientId",
+      };
+    }
+    const data = await commandRepository.findAll(nonPatientId);
 
     return {
       code: 200,
