@@ -1,8 +1,13 @@
-import { Server } from "socket.io";
 import type { Server as HttpServer } from "http";
-import jwt from "jsonwebtoken";
+import { Server } from "socket.io";
 
 import { prisma } from "@/lib/prisma";
+import {
+  patientAlertEventSchema,
+  patientVitalsEventSchema,
+} from "@/schemas/socket.schema";
+import { verifyAccessToken } from "@/utils/jwt";
+import { z } from "zod";
 
 let io: Server | null = null;
 
@@ -11,11 +16,10 @@ interface SocketUser {
   role: "PATIENT" | "NON_PATIENT" | "USER";
 }
 
-interface JwtPayload {
-  userId?: string;
-  id?: string;
-  role?: "PATIENT" | "NON_PATIENT" | "USER";
-}
+const jwtPayloadSchema = z.object({
+  id: z.string().uuid().optional(),
+  role: z.enum(["PATIENT", "NON_PATIENT", "USER"]).optional(),
+});
 
 /**
  * Patient room
@@ -47,16 +51,9 @@ export const initSocket = (server: HttpServer) => {
         return next(new Error("Authentication token required"));
       }
 
-      const secret = process.env.JWT_SECRET;
+      const decoded = jwtPayloadSchema.parse(verifyAccessToken(token));
 
-      if (!secret) {
-        console.error("JWT_SECRET is not configured");
-        return next(new Error("Server authentication configuration error"));
-      }
-
-      const decoded = jwt.verify(token, secret) as JwtPayload;
-
-      const userId = decoded.userId ?? decoded.id;
+      const userId = decoded.id;
 
       if (!userId) {
         return next(new Error("Invalid authentication token"));
@@ -130,15 +127,10 @@ export const initSocket = (server: HttpServer) => {
 
           socket.join(room);
 
-          console.log(
-            `👨‍⚕️ Non-patient ${user.userId} joined ${room}`
-          );
+          console.log(`👨‍⚕️ Non-patient ${user.userId} joined ${room}`);
         }
       } catch (error) {
-        console.error(
-          "Failed to join patient rooms:",
-          error
-        );
+        console.error("Failed to join patient rooms:", error);
       }
     }
 
@@ -153,17 +145,21 @@ export const initSocket = (server: HttpServer) => {
      */
     socket.on("patient:vitals", (payload) => {
       if (user.role !== "PATIENT") {
-        console.warn(
-          `Unauthorized patient:vitals from ${user.userId}`
-        );
+        console.warn(`Unauthorized patient:vitals from ${user.userId}`);
 
+        return;
+      }
+
+      const parsed = patientVitalsEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.warn("Invalid patient:vitals payload", parsed.error.issues);
         return;
       }
 
       const room = getPatientRoom(user.userId);
 
       io?.to(room).emit("patientVitals", {
-        ...payload,
+        ...parsed.data,
         patientId: user.userId,
       });
     });
@@ -178,26 +174,27 @@ export const initSocket = (server: HttpServer) => {
      */
     socket.on("patient:alert", (payload) => {
       if (user.role !== "PATIENT") {
-        console.warn(
-          `Unauthorized patient:alert from ${user.userId}`
-        );
+        console.warn(`Unauthorized patient:alert from ${user.userId}`);
 
+        return;
+      }
+
+      const parsed = patientAlertEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.warn("Invalid patient:alert payload", parsed.error.issues);
         return;
       }
 
       const room = getPatientRoom(user.userId);
 
       io?.to(room).emit("patientAlert", {
-        ...payload,
+        ...parsed.data,
         patientId: user.userId,
       });
     });
 
     socket.on("disconnect", (reason) => {
-      console.log(
-        `🔴 Socket disconnected: ${socket.id}`,
-        reason
-      );
+      console.log(`🔴 Socket disconnected: ${socket.id}`, reason);
     });
   });
 
@@ -223,7 +220,7 @@ export const getSocket = () => {
  */
 export const emitPatientVitals = (
   patientId: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
 ) => {
   if (!io) {
     console.warn("Socket.io is not initialized");
@@ -245,7 +242,7 @@ export const emitPatientVitals = (
  */
 export const emitPatientAlert = (
   patientId: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
 ) => {
   if (!io) {
     console.warn("Socket.io is not initialized");
@@ -270,10 +267,7 @@ export const emitPatientAlert = (
  * SATISFIED is NOT a Command enum value.
  * It is only a Socket/UI event.
  */
-export const emitSatisfied = (
-  patientId: string,
-  commandId: string
-) => {
+export const emitSatisfied = (patientId: string, commandId: string) => {
   if (!io) {
     console.warn("Socket.io is not initialized");
     return;
@@ -289,7 +283,5 @@ export const emitSatisfied = (
     recordedAt: new Date().toISOString(),
   });
 
-  console.log(
-    `✅ Satisfied event emitted to ${room}`
-  );
+  console.log(`✅ Satisfied event emitted to ${room}`);
 };

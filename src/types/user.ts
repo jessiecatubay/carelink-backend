@@ -36,12 +36,31 @@ export interface PatientNonPatient {
 }
 
 export interface PatientProfile {
-  id: string;
-  userId: string;
   connectionCode: string;
   age: number | null;
   gender: string | null;
   notes: string | null;
   emergencyContact: string | null;
   medicalConditions: string | null;
+}
+
+export interface NonPatientProfile {
+  relationship: string | null;
+  emergencyContact: string | null;
+}
+
+export interface OnboardingData {
+  userId: string;
+  email?: string;
+  role: "PATIENT" | "NON_PATIENT";
+  onBoarded?: boolean;
+
+  age?: number | null;
+  gender?: string | null;
+  notes?: string | null;
+  emergencyContact?: string | null;
+  medicalConditions?: string | null;
+  connectionCode?: string | null;
+
+  relationship?: string | null;
 }

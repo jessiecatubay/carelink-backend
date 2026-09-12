@@ -24,6 +24,10 @@ export function parsePagination(
 }
 
 function parseInteger(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isInteger(value) ? value : null;
+  }
+
   if (typeof value !== "string" || value.trim() === "") {
     return null;
   }

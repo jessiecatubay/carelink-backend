@@ -4,11 +4,16 @@ import { CommandData } from "@/types/user";
 export async function UpdateLatestCommandService(
   nonPatientId: string,
   data: Partial<CommandData>,
+  patientId?: string,
 ) {
   const commandRepository = new CommandRepository();
 
   try {
-    const updated = await commandRepository.updateByLatest(nonPatientId, data);
+    const updated = await commandRepository.updateByLatest(
+      nonPatientId,
+      data,
+      patientId,
+    );
 
     if (!updated) {
       return {

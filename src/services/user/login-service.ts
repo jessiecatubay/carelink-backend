@@ -2,6 +2,7 @@ import { UserRepository } from "@/repositories/user.repository";
 import { LoginInput } from "@/types/user";
 import { generateTokens } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
+import { TokenRepository } from "@/repositories/token.repository";
 
 export async function LoginService(input: LoginInput) {
   const userRepository = new UserRepository();
@@ -21,6 +22,12 @@ export async function LoginService(input: LoginInput) {
       id: user.id,
       email: user.email ?? input.email,
       role: user.role ?? "PATIENT",
+    });
+
+    await new TokenRepository().createRefreshToken({
+      userId: user.id,
+      token: tokens.refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     return {

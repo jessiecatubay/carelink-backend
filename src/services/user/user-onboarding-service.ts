@@ -1,9 +1,12 @@
 import { Role } from "@/generated/prisma/browser";
+import { PatientProfile } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { OnboardingData } from "@/types/user";
 
 export async function UserOnboardingService(
   userId: string,
   role: Role,
+  data: Partial<OnboardingData>,
 ) {
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -34,6 +37,10 @@ export async function UserOnboardingService(
       if (role === Role.PATIENT) {
         await tx.patientProfile.create({
           data: {
+            age: data.age,
+            gender: data.gender,
+            medicalConditions: data.medicalConditions,
+            notes: data.notes,
             userId: user.id,
           },
         });
@@ -43,6 +50,8 @@ export async function UserOnboardingService(
         await tx.nonPatientProfile.create({
           data: {
             userId: user.id,
+            relationship: data.relationship,
+            emergencyContact: data.emergencyContact,
           },
         });
       }
@@ -56,7 +65,6 @@ export async function UserOnboardingService(
       message: "User onboarded successfully",
       data: result,
     };
-
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "USER_NOT_FOUND") {

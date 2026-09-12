@@ -1,6 +1,7 @@
 import { UserRepository } from "@/repositories/user.repository";
 import { generateTokens } from "@/utils/jwt";
 import { hashPassword } from "@/utils/password";
+import { TokenRepository } from "@/repositories/token.repository";
 
 export async function SignupService(
   firstName: string,
@@ -29,6 +30,12 @@ export async function SignupService(
       id: user.id,
       email: user.email ?? email,
       role: user.role ?? "PATIENT",
+    });
+
+    await new TokenRepository().createRefreshToken({
+      userId: user.id,
+      token: tokens.refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     return {
