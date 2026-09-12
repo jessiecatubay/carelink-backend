@@ -1,16 +1,28 @@
 import { CommandRepository } from "@/repositories/command.repository";
 import { CommandData } from "@/types/user";
 
-export async function UpdateLatestCommandService(data: Partial<CommandData>) {
+export async function UpdateLatestCommandService(
+  nonPatientId: string,
+  data: Partial<CommandData>,
+) {
   const commandRepository = new CommandRepository();
 
   try {
-    await commandRepository.updateByLatest(data);
+    const updated = await commandRepository.updateByLatest(nonPatientId, data);
+
+    if (!updated) {
+      return {
+        code: 404,
+        status: "error",
+        message: "No command found",
+      };
+    }
 
     return {
       code: 200,
       status: "success",
       message: "Successfully updated latest command",
+      data: updated,
     };
   } catch (error) {
     return {

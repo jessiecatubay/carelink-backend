@@ -5,8 +5,9 @@ import {
   UpdateLatestCommandService,
 } from "@/services/command";
 import { Request, Response } from "express";
-import { getSocket } from "@/lib/socket";
+import { emitSatisfied } from "@/lib/socket";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
+import { parsePagination } from "@/utils/pagination";
 
 export class CommandController {
   public getAllCommandHistory = async (
@@ -14,7 +15,15 @@ export class CommandController {
     res: Response,
   ) => {
     if (!req?.user?.id) return;
-    const result = await GetAllCommandService(req.user.id);
+    const pagination = parsePagination(req.query);
+
+    if ("error" in pagination) {
+      return res
+        .status(400)
+        .json({ success: false, message: pagination.error });
+    }
+
+    const result = await GetAllCommandService(req.user.id, pagination);
 
     res.status(result.code).json(result);
   };
@@ -35,13 +44,6 @@ export class CommandController {
   ) => {
     if (!req?.user?.id) return;
     const result = await GetRecentCommandService(req.user.id);
-
-    res.status(result.code).json(result);
-  };
-
-  public updateLatest = async (req: AuthenticatedRequest, res: Response) => {
-    const { status } = req.body;
-    const result = await UpdateLatestCommandService({ status });
 
     res.status(result.code).json(result);
   };
