@@ -1,24 +1,25 @@
-import { DeviceData } from "@/types/user";
-import { Request, Response } from "express";
-import { getSocket } from "@/lib/socket";
 import {
-  GetVitalsHistoryService,
-  CreateVitalsHistoryService,
-  GetRecentVitalsHistoryService,
-} from "@/services/device";
-import { SendDeviceCommand } from "@/services/mqtt.service";
+  emitPatientAlert,
+  emitPatientVitals,
+  emitSatisfied,
+} from "@/lib/socket";
+import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 import {
   CreateCommandService,
   UpdateLatestCommandService,
 } from "@/services/command";
-import { emitPatientAlert } from "@/lib/socket";
-import { connected } from "node:process";
-import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
+import {
+  CreateVitalsHistoryService,
+  GetRecentVitalsHistoryService,
+  GetVitalsHistoryService,
+} from "@/services/device";
+import { SendDeviceCommand } from "@/services/mqtt.service";
+import { DeviceData } from "@/types/user";
 import { parsePagination } from "@/utils/pagination";
-import { emitSatisfied } from "@/lib/socket";
+import { Request, Response } from "express";
 
 export class DeviceController {
-  public patientVitals = async (req: Request, res: Response) => {
+  public patientVitals = async (req: AuthenticatedRequest, res: Response) => {
     const { deviceId, temperature, heartRate, sensorContact } =
       req.body as DeviceData;
     const receivedAt = new Date().toISOString();
@@ -42,11 +43,8 @@ export class DeviceController {
       receivedAt,
     };
 
-    try {
-      const io = getSocket();
-      io.emit("patientVitals", payload);
-    } catch (error) {
-      console.error("Socket not initialized:", error);
+    if (req.user?.role === "PATIENT" && req.user.id) {
+      emitPatientVitals(req.user.id, payload);
     }
 
     return res.status(200).json({
@@ -74,34 +72,56 @@ export class DeviceController {
     return res.status(result.code).json(result);
   };
 
-  public getRecentPatientVitals = async (req: Request, res: Response) => {
-    const result = await GetRecentVitalsHistoryService();
+  public getRecentPatientVitals = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ) => {
+    if (!req.user?.id) return;
+    const result = await GetRecentVitalsHistoryService(req.user.id);
 
     return res.status(result.code).json(result);
   };
 
-  public command = async (req: Request, res: Response) => {
-    const { deviceId, command, patientId } = req.body;
-    console.log("Patient pressed a command", req.body);
-    const connectedNonpatients = JSON.parse(req.body.connectedNonpatients);
+  public command = async (req: AuthenticatedRequest, res: Response) => {
+    const { deviceId, command, patientId, connectedNonpatients } = req.body;
 
-    const result = SendDeviceCommand(deviceId, command, patientId);
+    if (!req.user?.id || req.user.id !== patientId) {
+      return res.status(403).json({
+        success: false,
+        status: "error",
+        message: "You can only send commands for your own patient account",
+      });
+    }
+
     if (command.toLowerCase() === "satisfied") {
-      for (const nonPatientId of connectedNonpatients) {
-        await UpdateLatestCommandService(nonPatientId, {
-          status: "Satisfied",
-        });
+      let updatedCommandId: string | undefined;
+      for (const { nonPatientId } of connectedNonpatients) {
+        const updated = await UpdateLatestCommandService(
+          nonPatientId,
+          {
+            status: "Satisfied",
+          },
+          patientId,
+        );
+        updatedCommandId ??= updated.data?.id;
       }
-      emitSatisfied(patientId, crypto.randomUUID());
-      return {
-        code: 200,
+      if (updatedCommandId) {
+        emitSatisfied(patientId, updatedCommandId);
+      }
+      return res.status(200).json({
+        success: true,
         status: "success",
         message: "Successfully emitted satisfied",
-      };
+      });
+    }
+
+    const result = await SendDeviceCommand(deviceId, command, patientId);
+    if (!result.success) {
+      return res.status(503).json({ ...result, data: [] });
     }
     const createdCommands = [];
     const payload = [];
-    for (const nonPatientId of connectedNonpatients) {
+    for (const { nonPatientId } of connectedNonpatients) {
       const createdCommand = await CreateCommandService(
         deviceId,
         command.toUpperCase(),
@@ -126,7 +146,7 @@ export class DeviceController {
       console.error("Socket not initialized: ", error);
     }
 
-    return res.status(result.success ? 200 : 503).json({
+    return res.status(200).json({
       ...result,
       data: createdCommands,
     });

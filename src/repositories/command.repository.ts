@@ -3,6 +3,8 @@ import { CommandData } from "@/types/user";
 import { PaginationParams } from "@/utils/pagination";
 
 export class CommandRepository {
+  constructor(private readonly database = prisma) {}
+
   async findAll(nonPatientId: string, pagination: PaginationParams) {
     const commandWhere = {
       nonPatientId,
@@ -16,7 +18,7 @@ export class CommandRepository {
       },
     };
     const [data, totalItems] = await Promise.all([
-      prisma.commands.findMany({
+      this.database.commands.findMany({
         where: commandWhere,
         skip: pagination.skip,
         take: pagination.limit,
@@ -30,7 +32,7 @@ export class CommandRepository {
           recordedAt: true,
         },
       }),
-      prisma.commands.count({
+      this.database.commands.count({
         where: commandWhere,
       }),
     ]);
@@ -39,7 +41,7 @@ export class CommandRepository {
   }
 
   async findLatest(nonPatientId: string) {
-    return await prisma.commands.findFirst({
+    return await this.database.commands.findFirst({
       where: {
         nonPatientId: nonPatientId,
       },
@@ -50,13 +52,18 @@ export class CommandRepository {
   }
 
   async create(data: CommandData) {
-    return await prisma.commands.create({ data });
+    return await this.database.commands.create({ data });
   }
 
-  async updateByLatest(nonPatientId: string, data: Partial<CommandData>) {
-    const latest = await prisma.commands.findFirst({
+  async updateByLatest(
+    nonPatientId: string,
+    data: Partial<CommandData>,
+    patientId?: string,
+  ) {
+    const latest = await this.database.commands.findFirst({
       where: {
         nonPatientId,
+        ...(patientId ? { patientId } : {}),
       },
       orderBy: {
         recordedAt: "desc",
@@ -67,7 +74,7 @@ export class CommandRepository {
       return null;
     }
 
-    return await prisma.commands.update({
+    return await this.database.commands.update({
       where: {
         id: latest.id,
       },
@@ -76,7 +83,7 @@ export class CommandRepository {
   }
 
   async findRecent(nonPatientId: string) {
-    return await prisma.commands.findMany({
+    return await this.database.commands.findMany({
       where: {
         nonPatientId: nonPatientId,
       },

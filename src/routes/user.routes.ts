@@ -1,30 +1,39 @@
-import { UserController } from "../controllers/user.controller";
-import { Router } from "express";
-import { Request, Response } from "express";
+import { authenticateToken } from "@/middlewares/authenticate-token";
 import { validateSchema } from "@/middlewares/validate-schema";
 import {
+  getUserByIdSchema,
   loginSchema,
+  onboardingSchema,
   refreshSchema,
   signupSchema,
 } from "@/schemas/user.schema";
-import { AuthMiddleware } from "@/middlewares/auth-middleware";
-import { authenticateToken } from "@/middlewares/authenticate-token";
+import { Router } from "express";
+import { UserController } from "../controllers/user.controller";
 
 const router = Router();
-const userController = new UserController();const authMiddleWare = new AuthMiddleware();
+const userController = new UserController();
 
-router.post("/v1/signup", userController.signup);
+router.post("/v1/signup", validateSchema(signupSchema), userController.signup);
 router.post("/v1/login", validateSchema(loginSchema), userController.login);
 router.post(
   "/v1/refresh",
+  validateSchema(refreshSchema),
   userController.refresh,
 );
-router.post("/v1/user-onboarding", userController.onBoarded);
+router.post(
+  "/v1/user-onboarding",
+  validateSchema(onboardingSchema),
+  userController.onBoarded,
+);
 
 router.use(authenticateToken);
 
-router.post("/v1/get-user-by-id", userController.getById);
+router.post(
+  "/v1/get-user-by-id",
+  validateSchema(getUserByIdSchema),
+  userController.getById,
+);
 
-router.get("/v1/me", authMiddleWare.execute, userController.me);
+router.get("/v1/me", userController.me);
 
 export default router;

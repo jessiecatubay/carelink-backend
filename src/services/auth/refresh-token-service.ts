@@ -3,8 +3,24 @@ import { TokenRepository } from "@/repositories/token.repository";
 import { generateTokens, TokenExpiry, verifyRefreshToken } from "@/utils/jwt";
 
 export async function RefreshTokenService(refreshToken?: string) {
-  const payload = verifyRefreshToken(refreshToken!);
-  console.log("refresh token", refreshToken);
+  if (!refreshToken) {
+    return {
+      code: 401,
+      status: "error",
+      message: "Refresh token is required",
+    };
+  }
+
+  let payload;
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch {
+    return {
+      code: 401,
+      status: "error",
+      message: "Invalid or expired refresh token",
+    };
+  }
 
   // 1. Verify JWT signature and type
   if (!payload) {
@@ -19,7 +35,7 @@ export async function RefreshTokenService(refreshToken?: string) {
   const userRepository = new UserRepository();
 
   // 2. Check Database for the token (to verify it's not consumed/revoked)
-  const dbToken = await tokenRepository.findActiveRefreshToken(refreshToken!);
+  const dbToken = await tokenRepository.findActiveRefreshToken(refreshToken);
   if (!dbToken) {
     return {
       code: 401,

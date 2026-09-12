@@ -50,11 +50,11 @@ export class UserController {
   };
 
   public onBoarded = async (req: Request, res: Response) => {
-    const { userId, role } = req.body;
+    const { userId, role, ...data } = req.body;
     console.log("User onboarding", req.body);
     const roleUpper = typeof role === "string" ? role.toUpperCase() : role;
 
-    const result = await UserOnboardingService(userId, roleUpper);
+    const result = await UserOnboardingService(userId, roleUpper, data);
 
     return res.status(result.code).json(result);
   };

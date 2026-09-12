@@ -3,8 +3,10 @@ import { DeviceData } from "@/types/user";
 import { PaginationParams } from "@/utils/pagination";
 
 export class VitalsRepository {
+  constructor(private readonly database = prisma) {}
+
   async create(data: DeviceData) {
-    return await prisma.vitalReadings.create({ data });
+    return await this.database.vitalReadings.create({ data });
   }
 
   async get(nonPatientId: string, pagination: PaginationParams) {
@@ -19,7 +21,7 @@ export class VitalsRepository {
         },
       },
     };
-    const accessibleCommands = await prisma.commands.findMany({
+    const accessibleCommands = await this.database.commands.findMany({
       where: commandWhere,
       select: { deviceId: true },
       distinct: ["deviceId"],
@@ -32,7 +34,7 @@ export class VitalsRepository {
     };
 
     const [data, totalItems] = await Promise.all([
-      prisma.vitalReadings.findMany({
+      this.database.vitalReadings.findMany({
         where: vitalWhere,
         skip: pagination.skip,
         take: pagination.limit,
@@ -48,17 +50,42 @@ export class VitalsRepository {
           recordedAt: true,
         },
       }),
-      prisma.vitalReadings.count({ where: vitalWhere }),
+      this.database.vitalReadings.count({ where: vitalWhere }),
     ]);
 
     return { data, totalItems };
   }
 
-  async getRecent() {
-    return await prisma.vitalReadings.findMany({
+  async getRecent(nonPatientId: string) {
+    const accessibleCommands = await this.database.commands.findMany({
+      where: {
+        nonPatientId,
+        patient: {
+          patientConnections: {
+            some: { nonPatientId, status: "CONNECTED" },
+          },
+        },
+      },
+      select: { deviceId: true },
+      distinct: ["deviceId"],
+    });
+    const deviceIds = accessibleCommands
+      .map(({ deviceId }) => deviceId)
+      .filter((deviceId): deviceId is string => deviceId !== null);
+
+    return await this.database.vitalReadings.findMany({
+      where: { deviceId: { in: deviceIds } },
       take: 5,
       orderBy: {
         recordedAt: "desc",
+      },
+      select: {
+        id: true,
+        deviceId: true,
+        temperature: true,
+        heartRate: true,
+        sensorContact: true,
+        recordedAt: true,
       },
     });
   }
