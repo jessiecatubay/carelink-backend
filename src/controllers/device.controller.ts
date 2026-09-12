@@ -7,9 +7,15 @@ import {
   GetRecentVitalsHistoryService,
 } from "@/services/device";
 import { SendDeviceCommand } from "@/services/mqtt.service";
-import { CreateCommandService } from "@/services/command";
+import {
+  CreateCommandService,
+  UpdateLatestCommandService,
+} from "@/services/command";
 import { emitPatientAlert } from "@/lib/socket";
 import { connected } from "node:process";
+import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
+import { parsePagination } from "@/utils/pagination";
+import { emitSatisfied } from "@/lib/socket";
 
 export class DeviceController {
   public patientVitals = async (req: Request, res: Response) => {
@@ -32,7 +38,7 @@ export class DeviceController {
     );
 
     const payload = {
-      ...{ deviceId, temperature, heartRate },
+      ...{ deviceId, temperature, heartRate, sensorContact },
       receivedAt,
     };
 
@@ -50,8 +56,20 @@ export class DeviceController {
     });
   };
 
-  public getFullPatientVitals = async (req: Request, res: Response) => {
-    const result = await GetVitalsHistoryService();
+  public getFullPatientVitals = async (
+    req: AuthenticatedRequest,
+    res: Response,
+  ) => {
+    if (!req?.user?.id) return;
+    const pagination = parsePagination(req.query);
+
+    if ("error" in pagination) {
+      return res
+        .status(400)
+        .json({ success: false, message: pagination.error });
+    }
+
+    const result = await GetVitalsHistoryService(req.user.id, pagination);
 
     return res.status(result.code).json(result);
   };
@@ -68,35 +86,45 @@ export class DeviceController {
     const connectedNonpatients = JSON.parse(req.body.connectedNonpatients);
 
     const result = SendDeviceCommand(deviceId, command, patientId);
+    if (command.toLowerCase() === "satisfied") {
+      for (const nonPatientId of connectedNonpatients) {
+        await UpdateLatestCommandService(nonPatientId, {
+          status: "Satisfied",
+        });
+      }
+      emitSatisfied(patientId, crypto.randomUUID());
+      return {
+        code: 200,
+        status: "success",
+        message: "Successfully emitted satisfied",
+      };
+    }
     const createdCommands = [];
     const payload = [];
-    for(const nonPatientId of connectedNonpatients){
-    const createdCommand = await CreateCommandService(
-      deviceId,
-      command.toUpperCase(),
-      patientId,
-      nonPatientId
-    );
+    for (const nonPatientId of connectedNonpatients) {
+      const createdCommand = await CreateCommandService(
+        deviceId,
+        command.toUpperCase(),
+        patientId,
+        nonPatientId,
+      );
 
-    createdCommands.push(createdCommand);
-    
-    payload.push({
-      id: createdCommand.data?.id,
-      deviceId,
-      command,
-      recordedAt: createdCommand.data?.recordedAt,
-      status: createdCommand.data?.status,
-    });
-  }
-  
+      createdCommands.push(createdCommand);
+
+      payload.push({
+        id: createdCommand.data?.id,
+        deviceId,
+        command,
+        recordedAt: createdCommand.data?.recordedAt,
+        status: createdCommand.data?.status,
+      });
+    }
 
     try {
       emitPatientAlert(patientId, payload[0]);
     } catch (error) {
       console.error("Socket not initialized: ", error);
     }
-  
-    
 
     return res.status(result.success ? 200 : 503).json({
       ...result,
