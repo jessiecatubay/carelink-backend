@@ -14,7 +14,7 @@ router.get(
   // validateSchema(commandQuerySchema),
   commandController.getAllCommandHistory,
 );
-router.get(
+router.post(
   "/v1/get-latest-command",
   // validateSchema(commandQuerySchema),
   commandController.getLatestCommand,
