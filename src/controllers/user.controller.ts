@@ -51,6 +51,12 @@ export class UserController {
 
   public onBoarded = async (req: Request, res: Response) => {
     const { userId, role, ...data } = req.body;
+    if (role === "NON-PATIENT") {
+      const nonPatientRole = "NON_PATIENT";
+      const result = await UserOnboardingService(userId, nonPatientRole, data);
+
+      return res.status(result.code).json(result);
+    }
     console.log("User onboarding", req.body);
     const roleUpper = typeof role === "string" ? role.toUpperCase() : role;
 
@@ -60,7 +66,7 @@ export class UserController {
   };
 
   public me = async (req: AuthenticatedRequest, res: Response) => {
-    if(!req?.user?.id) return;
+    if (!req?.user?.id) return;
     const result = await GetMeService(req.user.id);
     return res.status(result.code).json(result);
   };

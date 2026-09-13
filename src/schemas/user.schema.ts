@@ -45,9 +45,10 @@ export const onboardingSchema = requestSchema(
       gender: z.string().trim(),
       medicalConditions: z.string().trim(),
       notes: z.string().trim().optional(),
+      relationship: z.string().trim(),
+      emergencyContact: z.string().trim(),
       onBoarded: z.boolean()
     })
-    .strict()
 );
 
 export const getUserByIdSchema = requestSchema(
