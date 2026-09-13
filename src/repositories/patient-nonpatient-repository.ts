@@ -11,6 +11,7 @@ export class PatientNonpatientRepository {
       where: {
         patientId,
         status: "CONNECTED",
+        currentPatient: true
       },
       select: {
         nonPatientId: true,

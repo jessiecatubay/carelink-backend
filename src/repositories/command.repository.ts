@@ -40,10 +40,11 @@ export class CommandRepository {
     return { data, totalItems };
   }
 
-  async findLatest(nonPatientId: string) {
+  async findLatest(nonPatientId: string, patientId: string) {
     return await this.database.commands.findFirst({
       where: {
         nonPatientId: nonPatientId,
+        patientId: patientId
       },
       orderBy: {
         recordedAt: "desc",

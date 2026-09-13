@@ -29,11 +29,11 @@ export class CommandController {
   };
 
   public getLatestCommand = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
   ) => {
-    if (!req?.user?.id) return;
-    const result = await GetLatestCommandService(req.user.id);
+    const { patientId, nonPatientId } = req.body
+    const result = await GetLatestCommandService(nonPatientId, patientId);
 
     res.status(result.code).json(result);
   };
