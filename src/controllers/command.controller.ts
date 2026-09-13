@@ -42,8 +42,9 @@ export class CommandController {
     req: AuthenticatedRequest,
     res: Response,
   ) => {
-    if (!req?.user?.id) return;
-    const result = await GetRecentCommandService(req.user.id);
+    const { patientId, nonPatientId } = req.body;
+    console.log(req.body);
+    const result = await GetRecentCommandService(nonPatientId, patientId);
 
     res.status(result.code).json(result);
   };

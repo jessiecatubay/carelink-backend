@@ -11,17 +11,17 @@ router.use(authenticateToken);
 
 router.get(
   "/v1/get-all-commands",
-  validateSchema(commandQuerySchema),
+  // validateSchema(commandQuerySchema),
   commandController.getAllCommandHistory,
 );
 router.get(
   "/v1/get-latest-command",
-  validateSchema(commandQuerySchema),
+  // validateSchema(commandQuerySchema),
   commandController.getLatestCommand,
 );
-router.get(
+router.post(
   "/v1/get-recent-commands",
-  validateSchema(commandQuerySchema),
+  // validateSchema(commandQuerySchema),
   commandController.getRecentCommands,
 );
 

@@ -82,16 +82,17 @@ export class DeviceController {
     return res.status(result.code).json(result);
   };
 
-  public command = async (req: AuthenticatedRequest, res: Response) => {
-    const { deviceId, command, patientId, connectedNonpatients } = req.body;
+  public command = async (req: Request, res: Response) => {
+    const { deviceId, command, patientId } = req.body;
 
-    if (!req.user?.id || req.user.id !== patientId) {
-      return res.status(403).json({
-        success: false,
-        status: "error",
-        message: "You can only send commands for your own patient account",
-      });
-    }
+    console.log("Patient pressed a command", req.body);
+
+    const connectedNonpatients = req.body.connectedNonpatients;
+
+    const result = SendDeviceCommand(deviceId, command, patientId);
+
+    const createdCommands = [];
+    const payload = [];
 
     if (command.toLowerCase() === "satisfied") {
       let updatedCommandId: string | undefined;
@@ -115,13 +116,7 @@ export class DeviceController {
       });
     }
 
-    const result = await SendDeviceCommand(deviceId, command, patientId);
-    if (!result.success) {
-      return res.status(503).json({ ...result, data: [] });
-    }
-    const createdCommands = [];
-    const payload = [];
-    for (const { nonPatientId } of connectedNonpatients) {
+    for (const nonPatientId of connectedNonpatients) {
       const createdCommand = await CreateCommandService(
         deviceId,
         command.toUpperCase(),
@@ -132,9 +127,9 @@ export class DeviceController {
       createdCommands.push(createdCommand);
 
       payload.push({
-        id: createdCommand.data?.id,
         deviceId,
         command,
+        nonPatientId,
         recordedAt: createdCommand.data?.recordedAt,
         status: createdCommand.data?.status,
       });
@@ -143,10 +138,10 @@ export class DeviceController {
     try {
       emitPatientAlert(patientId, payload[0]);
     } catch (error) {
-      console.error("Socket not initialized: ", error);
+      console.error("Socket not initialized:", error);
     }
 
-    return res.status(200).json({
+    return res.status(createdCommands[0].code).json({
       ...result,
       data: createdCommands,
     });

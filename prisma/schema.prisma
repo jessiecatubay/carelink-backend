@@ -92,12 +92,13 @@ model NonPatientProfile {
 }
 
 model PatientNonPatient {
-  id           String           @id @default(uuid())
-  patientId    String
-  nonPatientId String
-  status       ConnectionStatus @default(DISCONNECTED)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id             String           @id @default(uuid())
+  patientId      String
+  nonPatientId   String
+  status         ConnectionStatus @default(DISCONNECTED)
+  currentPatient Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   patient    User @relation("PatientConnections", fields: [patientId], references: [id], onDelete: Cascade)
   nonPatient User @relation("NonPatientConnections", fields: [nonPatientId], references: [id], onDelete: Cascade)

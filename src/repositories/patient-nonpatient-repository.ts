@@ -27,4 +27,20 @@ export class PatientNonpatientRepository {
       },
     });
   }
+
+  async update(
+    patientId: string,
+    nonPatientId: string,
+    data: Partial<PatientNonPatient>,
+  ) {
+    return await prisma.patientNonPatient.update({
+      where: {
+        patientId_nonPatientId: {
+          patientId,
+          nonPatientId,
+        },
+      },
+      data,
+    });
+  }
 }

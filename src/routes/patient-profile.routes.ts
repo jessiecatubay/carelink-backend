@@ -14,12 +14,12 @@ router.use(authenticateToken);
 
 router.post(
   "/v1/update-patient-profile",
-  validateSchema(patientProfileSchema),
+  // validateSchema(patientProfileSchema),
   updatePatientProfileController.update,
 );
 router.post(
   "/v1/generate-connection-code",
-  validateSchema(generateConnectionCodeSchema),
+  // validateSchema(generateConnectionCodeSchema),
   updatePatientProfileController.generateConnectionCode,
 );
 

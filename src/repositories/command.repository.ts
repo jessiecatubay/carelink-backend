@@ -82,10 +82,11 @@ export class CommandRepository {
     });
   }
 
-  async findRecent(nonPatientId: string) {
+  async findRecent(nonPatientId: string, patientId: string) {
     return await this.database.commands.findMany({
       where: {
         nonPatientId: nonPatientId,
+        patientId: patientId,
       },
       take: 5,
       orderBy: {
