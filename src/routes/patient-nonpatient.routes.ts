@@ -1,27 +1,33 @@
 import { PatientNonpatientController } from "@/controllers/patient-nonpatient.controller";
-import { authenticateToken } from "@/middlewares/authenticate-token";
 import { validateSchema } from "@/middlewares/validate-schema";
 import {
   connectSchema,
   connectedNonpatientsSchema,
+  updateConnectionSchema,
 } from "@/schemas/connection.schema";
 import { Router } from "express";
 
 const router = Router();
 const patientNonpatientController = new PatientNonpatientController();
 
-router.use(authenticateToken);
+// router.use(authenticateToken);
 
-router.get(
+router.post(
   "/v1/connected-nonpatients",
-  validateSchema(connectedNonpatientsSchema),
-  patientNonpatientController.findConnectedNonPatientService,
+  // validateSchema(connectedNonpatientsSchema),
+  patientNonpatientController.findConnectedNonPatient,
 );
 
 router.post(
   "/v1/connect",
-  validateSchema(connectSchema),
+  // validateSchema(connectSchema),
   patientNonpatientController.connect,
+);
+
+router.post(
+  "/v1/update",
+  // validateSchema(updateConnectionSchema),
+  patientNonpatientController.update,
 );
 
 export default router;

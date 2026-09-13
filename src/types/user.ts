@@ -33,6 +33,7 @@ export interface PatientNonPatient {
   patientId: string;
   nonPatientId: string;
   status: "CONNECTED" | "DISCONNECTED";
+  currentPatient?: boolean;
 }
 
 export interface PatientProfile {

@@ -12,6 +12,21 @@ export const connectSchema = requestSchema(
 
 export const connectedNonpatientsSchema = requestSchema(z.object({}).strict());
 
+export const updateConnectionSchema = requestSchema(
+  z
+    .object({
+      patientId: uuidSchema,
+      nonPatientId: uuidSchema,
+      status: z.enum(["CONNECTED", "DISCONNECTED"]).optional(),
+      currentPatient: z.boolean().optional(),
+    })
+    .strict()
+    .refine(
+      (data) => data.status !== undefined || data.currentPatient !== undefined,
+      { message: "status or currentPatient is required" },
+    ),
+);
+
 export const patientProfileSchema = requestSchema(
   z
     .object({

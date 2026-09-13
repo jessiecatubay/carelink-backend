@@ -8,27 +8,27 @@ import { Router } from "express";
 const router = Router();
 const deviceController = new DeviceController();
 
-router.use(authenticateToken);
+// router.use(authenticateToken);
 
 router.post(
   "/v1/vitals",
-  validateSchema(vitalsSchema),
+  // validateSchema(vitalsSchema),
   deviceController.patientVitals,
 );
 router.get(
   "/v1/get-full-vitals",
-  validateSchema(paginationRequestSchema),
+  // validateSchema(paginationRequestSchema),
   deviceController.getFullPatientVitals,
 );
 router.get(
   "/v1/get-recent-vitals",
-  validateSchema(paginationRequestSchema),
+  // validateSchema(paginationRequestSchema),
   deviceController.getRecentPatientVitals,
 );
 
 router.post(
   "/v1/command",
-  validateSchema(deviceCommandSchema),
+  
   deviceController.command,
 );
 

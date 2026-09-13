@@ -1,6 +1,6 @@
 import { CommandRepository } from "@/repositories/command.repository";
 
-export async function GetRecentCommandService(nonPatientId: string) {
+export async function GetRecentCommandService(nonPatientId: string, patientId: string) {
   const commandRepository = new CommandRepository();
 
   try {
@@ -12,7 +12,7 @@ export async function GetRecentCommandService(nonPatientId: string) {
       };
     }
     
-    const result = await commandRepository.findRecent(nonPatientId);
+    const result = await commandRepository.findRecent(nonPatientId, patientId);
 
     return {
       code: 200,

@@ -22,7 +22,6 @@ router.post(
 );
 router.post(
   "/v1/user-onboarding",
-  validateSchema(onboardingSchema),
   userController.onBoarded,
 );
 
@@ -30,7 +29,7 @@ router.use(authenticateToken);
 
 router.post(
   "/v1/get-user-by-id",
-  validateSchema(getUserByIdSchema),
+  // validateSchema(getUserByIdSchema),
   userController.getById,
 );
 

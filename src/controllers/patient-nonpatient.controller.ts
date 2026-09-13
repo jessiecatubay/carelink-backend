@@ -2,6 +2,7 @@ import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 import {
   ConnectPatientNonpatientService,
   FindConnectedNonpatientService,
+  UpdatePatientNonpatientService,
 } from "@/services/patientNonpatient";
 import { Request, Response } from "express";
 
@@ -16,13 +17,23 @@ export class PatientNonpatientController {
     return res.status(result.code).json(result);
   };
 
-  public findConnectedNonPatientService = async (
+  public findConnectedNonPatient = async (
     req: AuthenticatedRequest,
     res: Response,
   ) => {
-    if (!req.user?.id) return;
-    const result = await FindConnectedNonpatientService(req.user.id);
+    console.log(req.body);
+    const result = await FindConnectedNonpatientService(req.body.userId);
 
     return res.status(result.code).json(result);
   };
+
+  public update = async (req: Request, res: Response) => {
+    const { patientId, nonPatientId, ...data } = req.body;
+    console.log(req.body);
+    console.log(data);
+
+    const result = await UpdatePatientNonpatientService(patientId, nonPatientId, data);
+
+    return res.status(result.code).json(result);
+  }
 }

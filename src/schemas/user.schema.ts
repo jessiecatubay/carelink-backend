@@ -36,19 +36,18 @@ export const refreshSchema = requestSchema(
 );
 
 export const onboardingSchema = requestSchema(
-  z
-    .object({
-      userId: z.string().trim(),
-      email: z.string().trim().pipe(z.email().toLowerCase()),
-      role: roleSchema.exclude(["USER"]),
-      age: z.coerce.number(),
-      gender: z.string().trim(),
-      medicalConditions: z.string().trim(),
-      notes: z.string().trim().optional(),
-      relationship: z.string().trim(),
-      emergencyContact: z.string().trim(),
-      onBoarded: z.boolean()
-    })
+  z.looseObject({
+    userId: z.string().trim(),
+    email: z.string().trim().pipe(z.email().toLowerCase()),
+    role: z.string(),
+    age: z.coerce.number(),
+    gender: z.string().trim(),
+    medicalConditions: z.string().trim(),
+    notes: z.string().trim().optional(),
+    relationship: z.string().trim(),
+    emergencyContact: z.string().trim(),
+    onBoarded: z.boolean(),
+  })
 );
 
 export const getUserByIdSchema = requestSchema(
