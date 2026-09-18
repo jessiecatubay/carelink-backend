@@ -18,13 +18,18 @@ export class UserRepository {
           id: id,
         },
         include: {
+          nonPatientProfile: true,
           nonPatientConnections: {
             where: {
               status: "CONNECTED",
             },
             include: {
-              patient: true
-            }
+              patient: {
+                include: {
+                  patientProfile: true,
+                },
+              },
+            },
           },
         },
       });
@@ -34,13 +39,14 @@ export class UserRepository {
           id: id,
         },
         include: {
+          patientProfile: true,
           patientConnections: {
             where: {
               status: "CONNECTED",
             },
             include: {
-              nonPatient: true
-            }
+              nonPatient: true,
+            },
           },
         },
       });
@@ -51,8 +57,8 @@ export class UserRepository {
         },
         include: {
           patientProfile: true,
-          nonPatientProfile: true
-        }
+          nonPatientProfile: true,
+        },
       });
     }
   }

@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 const ITERATIONS = 120000;
 const KEYLEN = 64;
