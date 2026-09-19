@@ -1,10 +1,4 @@
 import { PatientNonpatientController } from "@/controllers/patient-nonpatient.controller";
-import { validateSchema } from "@/middlewares/validate-schema";
-import {
-  connectSchema,
-  connectedNonpatientsSchema,
-  updateConnectionSchema,
-} from "@/schemas/connection.schema";
 import { Router } from "express";
 
 const router = Router();

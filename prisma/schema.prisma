@@ -31,6 +31,42 @@ enum Command {
   EMERGENCY
 }
 
+enum PillReminderStatus {
+  PENDING
+  SENT
+  CANCELLED
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PillReminder {
+  id          String             @id @default(cuid())
+  patientId   String
+  createdById String
+  title       String
+  scheduledAt DateTime
+  status      PillReminderStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  patient   User @relation("PatientPillReminders", fields: [patientId], references: [id])
+  createdBy User @relation("CreatedPillReminders", fields: [createdById], references: [id])
+
+  @@index([patientId])
+  @@index([scheduledAt, status])
+}
+
 model Token {
   id         String    @id @default(uuid())
   type       TokenType
@@ -65,6 +101,11 @@ model User {
 
   patientCommands    Commands[] @relation("PatientCommands")
   nonPatientCommands Commands[] @relation("NonPatientCommands")
+
+  pillRemindersForPatient PillReminder[] @relation("PatientPillReminders")
+  createdPillReminders    PillReminder[] @relation("CreatedPillReminders")
+
+  pushTokens PushToken[]
 
   tokens Token[]
 }
