@@ -17,6 +17,7 @@ import { SendDeviceCommand } from "@/services/mqtt.service";
 import { DeviceData } from "@/types/user";
 import { parsePagination } from "@/utils/pagination";
 import { Request, Response } from "express";
+import { sendPatientCaregiversNotification } from "../services/notification.service";
 
 export class DeviceController {
   public patientVitals = async (req: AuthenticatedRequest, res: Response) => {
@@ -96,6 +97,7 @@ export class DeviceController {
 
     if (command.toLowerCase() === "satisfied") {
       let updatedCommandId: string | undefined;
+
       for (const { nonPatientId } of connectedNonpatients) {
         const updated = await UpdateLatestCommandService(
           nonPatientId,
@@ -104,11 +106,27 @@ export class DeviceController {
           },
           patientId,
         );
+
         updatedCommandId ??= updated.data?.id;
       }
+
       if (updatedCommandId) {
         emitSatisfied(patientId, updatedCommandId);
       }
+
+      try {
+        await sendPatientCaregiversNotification(patientId, {
+          title: "Request Satisfied",
+          body: "The patient's request has been marked as satisfied.",
+          data: {
+            command: "SATISFIED",
+            patientId,
+          },
+        });
+      } catch (error) {
+        console.error("Push notification error:", error);
+      }
+
       return res.status(200).json({
         success: true,
         status: "success",
@@ -139,6 +157,49 @@ export class DeviceController {
       emitPatientAlert(patientId, payload[0]);
     } catch (error) {
       console.error("Socket not initialized:", error);
+    }
+
+    try {
+      const normalizedCommand = command.toUpperCase();
+
+      let title = "CareLink Alert";
+      let body = "The patient sent a new alert.";
+
+      switch (normalizedCommand) {
+        case "FOOD":
+          title = "Food Assistance";
+          body = "The patient is requesting food.";
+          break;
+
+        case "WATER":
+          title = "Water Assistance";
+          body = "The patient is requesting water.";
+          break;
+
+        case "ASSISTANCE":
+          title = "Assistance Requested";
+          body = "The patient is requesting assistance.";
+          break;
+
+        case "EMERGENCY":
+          title = "Emergency Alert";
+          body = "The patient has triggered an emergency alert.";
+          break;
+      }
+
+      await sendPatientCaregiversNotification(patientId, {
+        title,
+        body,
+        data: {
+          command: normalizedCommand,
+          patientId,
+        },
+      });
+      console.log("Sending push notification for patient:", patientId);
+      console.log("Connected non-patients:", connectedNonpatients);
+
+    } catch (error) {
+      console.error("Push notification error:", error);
     }
 
     return res.status(createdCommands[0].code).json({
