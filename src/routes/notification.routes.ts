@@ -4,10 +4,10 @@ import { authenticateToken } from "@/middlewares/authenticate-token";
 
 const router = Router();
 
-// router.use(authenticateToken)
+router.use(authenticateToken);
 
 router.post(
-  "/v1/register-token",
+  "/v1/push-token",
   registerPushToken
 );
 
