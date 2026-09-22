@@ -18,12 +18,14 @@ import { DeviceData } from "@/types/user";
 import { parsePagination } from "@/utils/pagination";
 import { Request, Response } from "express";
 import { sendPatientCaregiversNotification } from "../services/notification.service";
+import { GetUserByDeviceService } from "@/services/patientProfile";
 
 export class DeviceController {
   public patientVitals = async (req: AuthenticatedRequest, res: Response) => {
     const { deviceId, temperature, heartRate, sensorContact } =
       req.body as DeviceData;
     const receivedAt = new Date().toISOString();
+    const user = await GetUserByDeviceService(deviceId);
 
     console.log(
       "Received device vitals:",
@@ -44,9 +46,9 @@ export class DeviceController {
       receivedAt,
     };
 
-    if (req.user?.role === "PATIENT" && req.user.id) {
-      emitPatientVitals(req.user.id, payload);
-    }
+    if(!user.data?.userId) return;
+
+    emitPatientVitals(user.data?.userId, payload);
 
     return res.status(200).json({
       success: true,
