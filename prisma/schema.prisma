@@ -117,12 +117,26 @@ model PatientProfile {
   gender            String?
   notes             String?
   connectionCode    String? @unique
-  emergencyContact  String?
   medicalConditions String?
   deviceOwned       String? @unique
   currentPatient    Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id])
+
+  emergencyContacts EmergencyContact[]
+}
+
+model EmergencyContact {
+  id           String  @id @default(uuid())
+  name         String?
+  relationship String?
+  phoneNumber  String?
+  isPriority   Boolean @default(false)
+
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [userId], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model NonPatientProfile {

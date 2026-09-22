@@ -11,7 +11,7 @@ export class PatientNonpatientRepository {
       where: {
         patientId,
         status: "CONNECTED",
-        currentPatient: true
+        currentPatient: true,
       },
       select: {
         nonPatientId: true,
@@ -42,6 +42,22 @@ export class PatientNonpatientRepository {
         },
       },
       data,
+    });
+  }
+
+  async findConnectedPatients(nonPatientId: string) {
+    return await prisma.patientNonPatient.findMany({
+      where: {
+        nonPatientId,
+        status: "CONNECTED",
+      },
+      include: {
+        patient: {
+          include: {
+            patientProfile: true,
+          },
+        },
+      },
     });
   }
 }
