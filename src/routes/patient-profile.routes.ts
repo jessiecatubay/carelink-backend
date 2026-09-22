@@ -14,13 +14,15 @@ router.use(authenticateToken);
 
 router.post(
   "/v1/update-patient-profile",
-  // validateSchema(patientProfileSchema),
   updatePatientProfileController.update,
 );
 router.post(
   "/v1/generate-connection-code",
-  // validateSchema(generateConnectionCodeSchema),
   updatePatientProfileController.generateConnectionCode,
+);
+router.post(
+  "/v1/register-device-owned",
+  updatePatientProfileController.registerDeviceOwned,
 );
 
 export default router;

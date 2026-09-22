@@ -43,6 +43,7 @@ export interface PatientProfile {
   gender: string | null;
   notes: string | null;
   emergencyContact: string | null;
+  deviceOwned: string;
   medicalConditions: string | null;
 }
 
