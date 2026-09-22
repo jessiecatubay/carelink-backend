@@ -19,12 +19,17 @@ export class UserRepository {
           id: id,
         },
         include: {
+          nonPatientProfile: true,
           nonPatientConnections: {
             where: {
               status: "CONNECTED",
             },
             include: {
-              patient: true,
+              patient: {
+                include: {
+                  patientProfile: true,
+                },
+              },
             },
           },
         },
@@ -35,6 +40,7 @@ export class UserRepository {
           id: id,
         },
         include: {
+          patientProfile: true,
           patientConnections: {
             where: {
               status: "CONNECTED",
