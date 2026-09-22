@@ -2,6 +2,7 @@ import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 import {
   ConnectPatientNonpatientService,
   FindConnectedNonpatientService,
+  FindConnectedPatientService,
   UpdatePatientNonpatientService,
 } from "@/services/patientNonpatient";
 import { Request, Response } from "express";
@@ -13,6 +14,17 @@ export class PatientNonpatientController {
       nonPatientId,
       connectionCode,
     );
+
+    return res.status(result.code).json(result);
+  };
+
+  public findConnectedPatient = async (
+    req: Request,
+    res: Response,
+  ) => {
+    const { nonPatientId } = req.body;
+    console.log("fafoaijwefoinasdlkfas", req.body);
+    const result = await FindConnectedPatientService(nonPatientId);
 
     return res.status(result.code).json(result);
   };
@@ -32,8 +44,12 @@ export class PatientNonpatientController {
     console.log(req.body);
     console.log(data);
 
-    const result = await UpdatePatientNonpatientService(patientId, nonPatientId, data);
+    const result = await UpdatePatientNonpatientService(
+      patientId,
+      nonPatientId,
+      data,
+    );
 
     return res.status(result.code).json(result);
-  }
+  };
 }

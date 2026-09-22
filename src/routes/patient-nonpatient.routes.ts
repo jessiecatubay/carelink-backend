@@ -24,4 +24,9 @@ router.post(
   patientNonpatientController.update,
 );
 
+router.post(
+  "/v1/connected-patients",
+  patientNonpatientController.findConnectedPatient,
+);
+
 export default router;

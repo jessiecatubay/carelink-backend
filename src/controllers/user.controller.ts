@@ -14,7 +14,7 @@ import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 export class UserController {
   public getById = async (req: Request, res: Response) => {
     const { id } = req.body;
-    console.log(id);
+    console.log("fasdfasf", id);
 
     const result = await GetUserByIdService(id);
 
