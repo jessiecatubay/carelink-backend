@@ -119,7 +119,7 @@ model PatientProfile {
   connectionCode    String? @unique
   emergencyContact  String?
   medicalConditions String?
-  deviceOwned       String? 
+  deviceOwned       String? @unique
   currentPatient    Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id])
