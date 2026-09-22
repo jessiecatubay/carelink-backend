@@ -7,6 +7,7 @@ export interface UserData {
   password?: string;
   role?: Role;
   onBoarded?: boolean;
+  emergencyContact?: string;
 }
 
 export interface LoginInput {

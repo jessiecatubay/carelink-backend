@@ -23,8 +23,8 @@ export class UserRepository {
               status: "CONNECTED",
             },
             include: {
-              patient: true
-            }
+              patient: true,
+            },
           },
         },
       });
@@ -39,8 +39,8 @@ export class UserRepository {
               status: "CONNECTED",
             },
             include: {
-              nonPatient: true
-            }
+              nonPatient: true,
+            },
           },
         },
       });
@@ -51,8 +51,8 @@ export class UserRepository {
         },
         include: {
           patientProfile: true,
-          nonPatientProfile: true
-        }
+          nonPatientProfile: true,
+        },
       });
     }
   }
@@ -62,22 +62,46 @@ export class UserRepository {
   }
 
   async findByEmail(email: string) {
-    return await prisma.user.findFirst({ where: { email } });
+    return await prisma.user.findFirst({
+      where: { email },
+      include: { patientProfile: true, nonPatientProfile: true },
+    });
   }
 
   async getUserByCode(connectionCode: string) {
     return await prisma.patientProfile.findUnique({
       where: {
-        connectionCode: connectionCode
+        connectionCode: connectionCode,
       },
       select: {
-        userId: true
-      }
-    })
+        userId: true,
+      },
+    });
   }
 
-  async update(id: string, data: Partial<UserData>) {
-    return await prisma.user.update({ where: { id }, data });
+  async update(email: string, data: Partial<UserData>) {
+    const userType = await prisma.user.findUnique({
+      where: { email: email },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if(userType?.role === "PATIENT") {
+      await prisma.patientProfile.update({where: {userId: userType.id}, data})
+    } else
+
+    if(userType?.role === "NON_PATIENT") {
+      await prisma.nonPatientProfile.update({where: {userId: userType.id}, data: {
+        emergencyContact: data.emergencyContact
+      }})
+    }
+
+    return await prisma.user.update({ where: { email }, data: {
+      firstName: data.firstName,
+      lastName: data.lastName
+    } });
   }
 
   async onBoardUser(email: string) {

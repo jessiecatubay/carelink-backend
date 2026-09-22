@@ -34,5 +34,6 @@ router.post(
 );
 
 router.get("/v1/me", userController.me);
+router.put("/v1/update-user", userController.update);
 
 export default router;
