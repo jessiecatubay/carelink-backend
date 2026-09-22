@@ -35,5 +35,6 @@ router.post(
 
 router.get("/v1/me", userController.me);
 router.put("/v1/update-user", userController.update);
+router.post("/v1/change-password", userController.changePassword);
 
 export default router;
