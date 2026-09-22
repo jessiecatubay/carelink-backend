@@ -7,7 +7,7 @@ import {
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
 import { UserData } from "@/types/user";
-import { RefreshTokenService } from "@/services/auth";
+import { RefreshTokenService, ChangePasswordService} from "@/services/auth";
 import { GetMeService } from "@/services/auth/get-me-service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 
@@ -70,4 +70,12 @@ export class UserController {
     const result = await GetMeService(req.user.id);
     return res.status(result!.code).json(result);
   };
+
+  public changePassword = async (req: AuthenticatedRequest, res: Response) => {
+    const { id, newPassword, currentPassword } = req.body;
+
+    const result = await ChangePasswordService(id, newPassword, currentPassword);
+
+    return res.status(result.code).json(result);
+  }
 }

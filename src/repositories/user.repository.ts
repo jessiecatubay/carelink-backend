@@ -8,6 +8,7 @@ export class UserRepository {
         id: id,
       },
       select: {
+        password: true,
         role: true,
       },
     });
@@ -100,7 +101,8 @@ export class UserRepository {
 
     return await prisma.user.update({ where: { email }, data: {
       firstName: data.firstName,
-      lastName: data.lastName
+      lastName: data.lastName,
+      password: data.password
     } });
   }
 
@@ -109,5 +111,14 @@ export class UserRepository {
       where: { email },
       data: { onBoarded: true },
     });
+  }
+
+  async changePassword (id: string, newPassword: string) {
+    return await prisma.user.update({
+      where: {id: id},
+      data: {
+        password: newPassword
+      }
+    })
   }
 }
