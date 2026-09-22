@@ -68,6 +68,6 @@ export class UserController {
   public me = async (req: AuthenticatedRequest, res: Response) => {
     if (!req?.user?.id) return;
     const result = await GetMeService(req.user.id);
-    return res.status(result.code).json(result);
+    return res.status(result!.code).json(result);
   };
 }

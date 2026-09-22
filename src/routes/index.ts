@@ -5,6 +5,7 @@ import commandRoutes from "./command.routes";
 import patientProfileRoutes from "./patient-profile.routes";
 import patientNonpatientRoutes from "./patient-nonpatient.routes";
 import notificationRoutes from "./notification.routes";
+import aiRoutes from "./ai.routes";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/command", commandRoutes);
 router.use("/patient-profile", patientProfileRoutes);
 router.use("/patient-nonpatient", patientNonpatientRoutes);
 router.use("/notification", notificationRoutes);
+router.use("/ai", aiRoutes);
 
 export default router
