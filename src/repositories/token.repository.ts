@@ -3,7 +3,11 @@ import { TokenType } from "@/generated/prisma/enums";
 import type { Token } from "@/generated/prisma/client";
 
 export class TokenRepository {
-  async createEmailVerificationToken(params: { userId: string; token: string; expiresAt: Date }) {
+  async createEmailVerificationToken(params: {
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }) {
     const { userId, token, expiresAt } = params;
     return prisma.token.create({
       data: {
@@ -15,7 +19,11 @@ export class TokenRepository {
     });
   }
 
-  async createRefreshToken(params: { userId: string; token: string; expiresAt: Date }) {
+  async createRefreshToken(params: {
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }) {
     const { userId, token, expiresAt } = params;
     return prisma.token.create({
       data: {
@@ -38,7 +46,6 @@ export class TokenRepository {
     });
   }
 
-
   async findActiveEmailVerificationToken(token: string): Promise<Token | null> {
     return prisma.token.findFirst({
       where: {
@@ -50,7 +57,9 @@ export class TokenRepository {
     });
   }
 
-  async findLatestEmailVerificationTokenByUser(userId: string): Promise<Token | null> {
+  async findLatestEmailVerificationTokenByUser(
+    userId: string,
+  ): Promise<Token | null> {
     return prisma.token.findFirst({
       where: {
         userId,
@@ -73,6 +82,84 @@ export class TokenRepository {
     return prisma.token.update({
       where: { id },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async createPasswordResetToken(params: {
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }) {
+    const { userId, token, expiresAt } = params;
+
+    return prisma.token.create({
+      data: {
+        userId,
+        token,
+        expiresAt,
+        type: TokenType.PASSWORD_RESET,
+      },
+    });
+  }
+
+  async revokeActivePasswordResetTokens(userId: string) {
+    return prisma.token.updateMany({
+      where: {
+        userId,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+  }
+
+  async findActivePasswordResetToken(token: string): Promise<Token | null> {
+    return prisma.token.findFirst({
+      where: {
+        token,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+  }
+
+  async createPasswordResetAuthorizationToken(params: {
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }) {
+    const { userId, token, expiresAt } = params;
+
+    return prisma.token.create({
+      data: {
+        userId,
+        token,
+        expiresAt,
+        type: TokenType.PASSWORD_RESET,
+      },
+    });
+  }
+
+  async findActivePasswordResetAuthorizationToken(
+    token: string,
+  ): Promise<Token | null> {
+    return prisma.token.findFirst({
+      where: {
+        token,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
     });
   }
 }

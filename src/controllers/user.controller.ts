@@ -7,7 +7,13 @@ import {
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
 import { UserData } from "@/types/user";
-import { RefreshTokenService, ChangePasswordService} from "@/services/auth";
+import {
+  RefreshTokenService,
+  ChangePasswordService,
+  ForgotPasswordService,
+  ResetPasswordService,
+  VerifyResetCodeService,
+} from "@/services/auth";
 import { GetMeService } from "@/services/auth/get-me-service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 
@@ -74,8 +80,36 @@ export class UserController {
   public changePassword = async (req: AuthenticatedRequest, res: Response) => {
     const { id, newPassword, currentPassword } = req.body;
 
-    const result = await ChangePasswordService(id, newPassword, currentPassword);
+    const result = await ChangePasswordService(
+      id,
+      newPassword,
+      currentPassword,
+    );
 
     return res.status(result.code).json(result);
-  }
+  };
+
+  public forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const result = await ForgotPasswordService(email);
+
+    return res.status(result.code).json(result);
+  };
+
+  public resetPassword = async (req: Request, res: Response) => {
+    const { resetToken, newPassword } = req.body;
+
+    const result = await ResetPasswordService(resetToken, newPassword);
+
+    return res.status(result.code).json(result);
+  };
+
+  public verifyResetCode = async (req: Request, res: Response) => {
+    const { email, resetCode } = req.body;
+
+    const result = await VerifyResetCodeService(email, resetCode);
+
+    return res.status(result.code).json(result);
+  };
 }
