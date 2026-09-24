@@ -25,6 +25,10 @@ router.post(
   userController.onBoarded,
 );
 
+router.post("/v1/forgot-password", userController.forgotPassword);
+router.post("/v1/verify-reset-code", userController.verifyResetCode);
+router.post("/v1/reset-password", userController.resetPassword);
+
 router.use(authenticateToken);
 
 router.post(
