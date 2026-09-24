@@ -93,6 +93,9 @@ model User {
   onBoarded Boolean  @default(false)
   updatedAt DateTime @updatedAt
 
+  notificationsEnabled Boolean @default(true)
+  alertSoundEnabled    Boolean @default(true)
+
   nonPatientProfile NonPatientProfile?
   patientProfile    PatientProfile?
 
