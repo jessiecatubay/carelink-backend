@@ -3,6 +3,7 @@ import {
   LoginService,
   UpdateUserService,
   GetUserByIdService,
+  GoogleAuthService,
 } from "@/services/user";
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
@@ -17,7 +18,6 @@ import {
 import { GetMeService } from "@/services/auth/get-me-service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 import {
-  CreateEmailVerificationService,
   VerifyEmailService,
   ResendEmailVerificationService,
 } from "@/services/auth";
@@ -132,6 +132,14 @@ export class UserController {
     const { email } = req.body;
 
     const result = await ResendEmailVerificationService(email);
+
+    return res.status(result.code).json(result);
+  };
+
+  public googleAuth = async (req: Request, res: Response) => {
+    const { idToken } = req.body;
+
+    const result = await GoogleAuthService(idToken);
 
     return res.status(result.code).json(result);
   };

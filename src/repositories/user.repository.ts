@@ -5,7 +5,7 @@ export class UserRepository {
   async getById(id: string) {
     const user = await prisma.user.findUnique({
       where: {
-        id: id,
+        id,
       },
       select: {
         password: true,
@@ -16,7 +16,7 @@ export class UserRepository {
     if (user?.role === "NON_PATIENT") {
       return await prisma.user.findUnique({
         where: {
-          id: id,
+          id,
         },
         include: {
           nonPatientProfile: true,
@@ -34,10 +34,12 @@ export class UserRepository {
           },
         },
       });
-    } else if (user?.role === "PATIENT") {
+    }
+
+    if (user?.role === "PATIENT") {
       return await prisma.user.findUnique({
         where: {
-          id: id,
+          id,
         },
         include: {
           patientProfile: true,
@@ -51,34 +53,73 @@ export class UserRepository {
           },
         },
       });
-    } else {
-      return await prisma.user.findUnique({
-        where: {
-          id: id,
-        },
-        include: {
-          patientProfile: true,
-          nonPatientProfile: true,
-        },
-      });
     }
+
+    return await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
+      },
+    });
   }
 
   async create(data: UserData) {
-    return await prisma.user.create({ data });
+    return await prisma.user.create({
+      data,
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
+      },
+    });
   }
 
   async findByEmail(email: string) {
     return await prisma.user.findFirst({
-      where: { email },
-      include: { patientProfile: true, nonPatientProfile: true },
+      where: {
+        email,
+      },
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
+      },
+    });
+  }
+
+  async findByGoogleId(googleId: string) {
+    return await prisma.user.findUnique({
+      where: {
+        googleId,
+      },
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
+      },
+    });
+  }
+
+  async linkGoogleAccount(userId: string, googleId: string) {
+    return await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        googleId,
+        emailVerified: true,
+      },
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
+      },
     });
   }
 
   async getUserByCode(connectionCode: string) {
     return await prisma.patientProfile.findUnique({
       where: {
-        connectionCode: connectionCode,
+        connectionCode,
       },
       select: {
         userId: true,
@@ -88,43 +129,64 @@ export class UserRepository {
 
   async update(email: string, data: Partial<UserData>) {
     const userType = await prisma.user.findUnique({
-      where: { email: email },
+      where: {
+        email,
+      },
       select: {
         id: true,
         role: true,
       },
     });
 
-    if(userType?.role === "PATIENT") {
-      await prisma.patientProfile.update({where: {userId: userType.id}, data})
-    } else
-
-    if(userType?.role === "NON_PATIENT") {
-      await prisma.nonPatientProfile.update({where: {userId: userType.id}, data: {
-        emergencyContact: data.emergencyContact
-      }})
+    if (userType?.role === "PATIENT") {
+      await prisma.patientProfile.update({
+        where: {
+          userId: userType.id,
+        },
+        data,
+      });
+    } else if (userType?.role === "NON_PATIENT") {
+      await prisma.nonPatientProfile.update({
+        where: {
+          userId: userType.id,
+        },
+        data: {
+          emergencyContact: data.emergencyContact,
+        },
+      });
     }
 
-    return await prisma.user.update({ where: { email }, data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      password: data.password
-    } });
+    return await prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        password: data.password,
+      },
+    });
   }
 
   async onBoardUser(email: string) {
     return await prisma.user.update({
-      where: { email },
-      data: { onBoarded: true },
+      where: {
+        email,
+      },
+      data: {
+        onBoarded: true,
+      },
     });
   }
 
-  async changePassword (id: string, newPassword: string) {
+  async changePassword(id: string, newPassword: string) {
     return await prisma.user.update({
-      where: {id: id},
+      where: {
+        id,
+      },
       data: {
-        password: newPassword
-      }
-    })
+        password: newPassword,
+      },
+    });
   }
 }
