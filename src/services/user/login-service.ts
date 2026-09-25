@@ -22,6 +22,7 @@ export async function LoginService(input: LoginInput) {
       return {
         code: 403,
         status: "error",
+        emailVerified: false,
         message: "Please verify your email address before logging in.",
       };
     }
