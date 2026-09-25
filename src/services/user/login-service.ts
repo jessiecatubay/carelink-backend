@@ -18,6 +18,14 @@ export async function LoginService(input: LoginInput) {
       return { code: 400, status: "error", message: "Invalid Credentials" };
     }
 
+    if (!user.emailVerified) {
+      return {
+        code: 403,
+        status: "error",
+        message: "Please verify your email address before logging in.",
+      };
+    }
+
     const tokens = generateTokens({
       id: user.id,
       email: user.email ?? input.email,

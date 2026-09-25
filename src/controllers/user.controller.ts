@@ -16,6 +16,11 @@ import {
 } from "@/services/auth";
 import { GetMeService } from "@/services/auth/get-me-service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
+import {
+  CreateEmailVerificationService,
+  VerifyEmailService,
+  ResendEmailVerificationService,
+} from "@/services/auth";
 
 export class UserController {
   public getById = async (req: Request, res: Response) => {
@@ -29,6 +34,7 @@ export class UserController {
 
   public signup = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
+
     const result = await SignupService(firstName, lastName, email, password);
 
     return res.status(result.code).json(result);
@@ -109,6 +115,23 @@ export class UserController {
     const { email, resetCode } = req.body;
 
     const result = await VerifyResetCodeService(email, resetCode);
+
+    return res.status(result.code).json(result);
+  };
+
+  public verifyEmail = async (req: Request, res: Response) => {
+    const { email, verificationCode } = req.body;
+    console.log(req.body);
+
+    const result = await VerifyEmailService(email, verificationCode);
+
+    return res.status(result.code).json(result);
+  };
+
+  public resendEmailVerification = async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const result = await ResendEmailVerificationService(email);
 
     return res.status(result.code).json(result);
   };
