@@ -5,8 +5,10 @@ export interface UserData {
   lastName?: string;
   email?: string;
   password?: string;
+  googleId?: string;
   role?: Role;
   onBoarded?: boolean;
+  emailVerified?: boolean;
   emergencyContact?: string;
 }
 
@@ -57,13 +59,11 @@ export interface OnboardingData {
   email?: string;
   role: "PATIENT" | "NON_PATIENT";
   onBoarded?: boolean;
-
   age?: number | null;
   gender?: string | null;
   notes?: string | null;
   emergencyContact?: string | null;
   medicalConditions?: string | null;
   connectionCode?: string | null;
-
   relationship?: string | null;
 }

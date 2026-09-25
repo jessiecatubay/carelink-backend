@@ -35,6 +35,11 @@ router.post(
   userController.resendEmailVerification,
 );
 
+router.post(
+  "/v1/google-auth",
+  userController.googleAuth,
+);
+
 router.use(authenticateToken);
 
 router.post(
