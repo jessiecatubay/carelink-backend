@@ -83,15 +83,16 @@ model Token {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String?  @unique
-  password  String?
-  createdAt DateTime @default(now())
-  firstName String?
-  lastName  String?
-  role      Role     @default(USER)
-  onBoarded Boolean  @default(false)
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  email         String?  @unique
+  password      String?
+  createdAt     DateTime @default(now())
+  firstName     String?
+  lastName      String?
+  role          Role     @default(USER)
+  emailVerified Boolean  @default(false)
+  onBoarded     Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
 
   notificationsEnabled Boolean @default(true)
   alertSoundEnabled    Boolean @default(true)

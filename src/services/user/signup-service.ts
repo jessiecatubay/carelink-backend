@@ -1,7 +1,6 @@
 import { UserRepository } from "@/repositories/user.repository";
-import { generateTokens } from "@/utils/jwt";
 import { hashPassword } from "@/utils/password";
-import { TokenRepository } from "@/repositories/token.repository";
+import { CreateEmailVerificationService } from "@/services/auth/verify-email-service";
 
 export async function SignupService(
   firstName: string,
@@ -12,36 +11,46 @@ export async function SignupService(
   const userRepository = new UserRepository();
 
   try {
-    const existingUser = await userRepository.findByEmail(email);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await userRepository.findByEmail(
+      normalizedEmail,
+    );
 
     if (existingUser) {
-      return { code: 409, status: "error", message: "Email already exists" };
+      return {
+        code: 409,
+        status: "error",
+        message: "Email already exists",
+      };
     }
 
     const hashedPass = hashPassword(password);
+
     const user = await userRepository.create({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       password: hashedPass,
     });
 
-    const tokens = generateTokens({
-      id: user.id,
-      email: user.email ?? email,
-      role: user.role ?? "PATIENT",
-    });
+    const verificationResult =
+      await CreateEmailVerificationService(user.id);
 
-    await new TokenRepository().createRefreshToken({
-      userId: user.id,
-      token: tokens.refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    if (verificationResult.code !== 200) {
+      return {
+        code: 500,
+        status: "error",
+        message:
+          "Account was created, but we were unable to send the verification email.",
+      };
+    }
 
     return {
       code: 201,
       status: "success",
-      message: "User created successfully",
+      message:
+        "User created successfully. A verification code has been sent to your email.",
       data: {
         user: {
           id: user.id,
@@ -50,13 +59,17 @@ export async function SignupService(
           email: user.email,
           role: user.role,
           onBoarded: user.onBoarded,
+          emailVerified: user.emailVerified,
         },
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
       },
     };
   } catch (error) {
-    console.error(error);
-    return { code: 500, status: "error", message: "Unable to create account" };
+    console.error("Signup error:", error);
+
+    return {
+      code: 500,
+      status: "error",
+      message: "Unable to create account",
+    };
   }
 }
