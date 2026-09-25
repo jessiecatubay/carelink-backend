@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,20 +7,191 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TokenType {
+  REFRESH
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+}
+
 enum Role {
   PATIENT
-  CAREGIVER
+  NON_PATIENT
+  USER
+}
+
+enum Command {
+  ASSISTANCE
+  FOOD
+  WATER
+  EMERGENCY
+}
+
+enum PillReminderStatus {
+  PENDING
+  SENT
+  CANCELLED
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PillReminder {
+  id          String             @id @default(cuid())
+  patientId   String
+  createdById String
+  title       String
+  scheduledAt DateTime
+  status      PillReminderStatus @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  patient   User @relation("PatientPillReminders", fields: [patientId], references: [id])
+  createdBy User @relation("CreatedPillReminders", fields: [createdById], references: [id])
+
+  @@index([patientId])
+  @@index([scheduledAt, status])
+}
+
+model Token {
+  id         String    @id @default(uuid())
+  type       TokenType
+  token      String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  consumedAt DateTime?
+  revokedAt  DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
 }
 
 model User {
-  id String @id @default(uuid())
-  firstName String?
-  lastName String?
-  email String? @unique
-  password String?
-  role Role @default(PATIENT)
-  phone String?
+  id            String   @id @default(uuid())
+  googleId      String?  @unique
+  email         String?  @unique
+  password      String?
+  createdAt     DateTime @default(now())
+  firstName     String?
+  lastName      String?
+  role          Role     @default(USER)
+  emailVerified Boolean  @default(false)
+  onBoarded     Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+
+  notificationsEnabled Boolean @default(true)
+  alertSoundEnabled    Boolean @default(true)
+
+  nonPatientProfile NonPatientProfile?
+  patientProfile    PatientProfile?
+
+  patientConnections    PatientNonPatient[] @relation("PatientConnections")
+  nonPatientConnections PatientNonPatient[] @relation("NonPatientConnections")
+
+  patientCommands    Commands[] @relation("PatientCommands")
+  nonPatientCommands Commands[] @relation("NonPatientCommands")
+
+  pillRemindersForPatient PillReminder[] @relation("PatientPillReminders")
+  createdPillReminders    PillReminder[] @relation("CreatedPillReminders")
+
+  pushTokens PushToken[]
+
+  tokens Token[]
+}
+
+model PatientProfile {
+  id                String  @id @default(uuid())
+  userId            String  @unique
+  age               Int?
+  gender            String?
+  notes             String?
+  connectionCode    String? @unique
+  medicalConditions String?
+  deviceOwned       String? @unique
+  currentPatient    Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+
+  emergencyContacts EmergencyContact[]
+}
+
+model EmergencyContact {
+  id           String  @id @default(uuid())
+  name         String?
   relationship String?
-  verifiedAt DateTime? @map("email_verified")
-  createdAt DateTime @default(now())
+  phoneNumber  String?
+  isPriority   Boolean @default(false)
+
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [userId], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model NonPatientProfile {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  emergencyContact String?
+  relationship     String?
+  user             User    @relation(fields: [userId], references: [id])
+}
+
+model PatientNonPatient {
+  id             String           @id @default(uuid())
+  patientId      String
+  nonPatientId   String
+  status         ConnectionStatus @default(DISCONNECTED)
+  currentPatient Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  patient    User @relation("PatientConnections", fields: [patientId], references: [id], onDelete: Cascade)
+  nonPatient User @relation("NonPatientConnections", fields: [nonPatientId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, nonPatientId])
+  @@index([patientId])
+  @@index([nonPatientId])
+}
+
+model VitalReadings {
+  id            String   @id @default(uuid())
+  deviceId      String
+  temperature   Float
+  heartRate     Int
+  recordedAt    DateTime @default(now())
+  sensorContact Boolean
+
+  @@index([deviceId, recordedAt])
+}
+
+model Commands {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  command      Command?
+  status       String?  @default("Pending")
+  patientId    String
+  nonPatientId String
+  recordedAt   DateTime @default(now())
+  deviceId     String?
+
+  patient    User @relation("PatientCommands", fields: [patientId], references: [id], onDelete: Cascade)
+  nonPatient User @relation("NonPatientCommands", fields: [nonPatientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([nonPatientId])
 }
