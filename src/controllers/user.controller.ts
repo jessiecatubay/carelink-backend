@@ -78,9 +78,32 @@ export class UserController {
   };
 
   public me = async (req: AuthenticatedRequest, res: Response) => {
-    if (!req?.user?.id) return;
-    const result = await GetMeService(req.user.id);
-    return res.status(result!.code).json(result);
+    try {
+      if (!req?.user?.id) {
+        return res.status(401).json({
+          status: "error",
+          message: "Unauthorized. User information is missing.",
+        });
+      }
+
+      const result = await GetMeService(req.user.id);
+
+      if (!result) {
+        return res.status(500).json({
+          status: "error",
+          message: "GetMeService returned no result.",
+        });
+      }
+
+      return res.status(result.code).json(result);
+    } catch (error) {
+      console.error("GET /me controller error:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to retrieve current user.",
+      });
+    }
   };
 
   public changePassword = async (req: AuthenticatedRequest, res: Response) => {
