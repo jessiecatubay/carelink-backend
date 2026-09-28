@@ -147,10 +147,6 @@ export const initSocket = (server: HttpServer) => {
         return;
       }
 
-      const existing = patientPresence.get(user.userId);
-
-      const wasOffline = !existing?.isOnline;
-
       patientPresence.set(user.userId, {
         lastHeartbeat: Date.now(),
         isOnline: true,
@@ -158,17 +154,13 @@ export const initSocket = (server: HttpServer) => {
 
       console.log(`💓 Heartbeat received from patient ${user.userId}`);
 
-      if (wasOffline) {
-        const room = getPatientRoom(user.userId);
+      const room = getPatientRoom(user.userId);
 
-        io?.to(room).emit("patientConnectionStatus", {
-          patientId: user.userId,
-          status: "CONNECTED",
-          timestamp: new Date().toISOString(),
-        });
-
-        console.log(`🟢 Patient ${user.userId} is now ONLINE`);
-      }
+      io?.to(room).emit("patientConnectionStatus", {
+        patientId: user.userId,
+        status: "CONNECTED",
+        timestamp: new Date().toISOString(),
+      });
     });
 
     /**
@@ -203,6 +195,15 @@ export const initSocket = (server: HttpServer) => {
           socket.join(room);
 
           console.log(`👨‍⚕️ Non-patient ${user.userId} joined ${room}`);
+
+          const presence = patientPresence.get(connection.patientId);
+          if (presence?.isOnline) {
+            socket.emit("patientConnectionStatus", {
+              patientId: connection.patientId,
+              status: "CONNECTED",
+              timestamp: new Date(presence.lastHeartbeat).toISOString(),
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to join patient rooms:", error);

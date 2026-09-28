@@ -46,7 +46,7 @@ export class DeviceController {
       receivedAt,
     };
 
-    if(!user.data?.userId) return;
+    if (!user.data?.userId) return;
 
     emitPatientVitals(user.data?.userId, payload);
 
@@ -90,17 +90,26 @@ export class DeviceController {
 
     console.log("Patient pressed a command", req.body);
 
-    const connectedNonpatients = req.body.connectedNonpatients;
+    const rawConnected = req.body.connectedNonpatients;
+    const connectedNonpatients: string[] = Array.isArray(rawConnected)
+      ? rawConnected
+          .map((item: any) =>
+            typeof item === "string" ? item : item?.nonPatientId
+          )
+          .filter(Boolean)
+      : [];
 
     const result = SendDeviceCommand(deviceId, command, patientId);
 
     const createdCommands = [];
     const payload = [];
 
-    if (command.toLowerCase() === "satisfied") {
+    const normalizedCommand = (command || "").toUpperCase();
+
+    if (normalizedCommand === "SATISFIED") {
       let updatedCommandId: string | undefined;
 
-      for (const { nonPatientId } of connectedNonpatients) {
+      for (const nonPatientId of connectedNonpatients) {
         const updated = await UpdateLatestCommandService(
           nonPatientId,
           {
@@ -112,16 +121,15 @@ export class DeviceController {
         updatedCommandId ??= updated.data?.id;
       }
 
-      if (updatedCommandId) {
-        emitSatisfied(patientId, updatedCommandId);
-      }
+      emitSatisfied(patientId, updatedCommandId ?? "satisfied");
 
       try {
         await sendPatientCaregiversNotification(patientId, {
-          title: "Request Satisfied",
+          title: "✅ Request Satisfied",
           body: "The patient's request has been marked as satisfied.",
           data: {
             command: "SATISFIED",
+            alertType: "SATISFIED",
             patientId,
           },
         });
@@ -139,7 +147,7 @@ export class DeviceController {
     for (const nonPatientId of connectedNonpatients) {
       const createdCommand = await CreateCommandService(
         deviceId,
-        command.toUpperCase(),
+        normalizedCommand as any,
         patientId,
         nonPatientId,
       );
@@ -147,45 +155,59 @@ export class DeviceController {
       createdCommands.push(createdCommand);
 
       payload.push({
+        id: createdCommand.data?.id,
         deviceId,
-        command,
+        command: normalizedCommand,
+        alertType: normalizedCommand,
         nonPatientId,
-        recordedAt: createdCommand.data?.recordedAt,
-        status: createdCommand.data?.status,
+        recordedAt: createdCommand.data?.recordedAt
+          ? new Date(createdCommand.data.recordedAt).toISOString()
+          : new Date().toISOString(),
+        status: createdCommand.data?.status ?? "Pending",
+        patientId,
       });
     }
 
     try {
-      emitPatientAlert(patientId, payload[0]);
+      if (payload.length > 0) {
+        emitPatientAlert(patientId, payload[0]);
+      } else {
+        emitPatientAlert(patientId, {
+          deviceId,
+          command: normalizedCommand,
+          alertType: normalizedCommand,
+          recordedAt: new Date().toISOString(),
+          status: "Pending",
+          patientId,
+        });
+      }
     } catch (error) {
       console.error("Socket not initialized:", error);
     }
 
     try {
-      const normalizedCommand = command.toUpperCase();
-
       let title = "CareLink Alert";
       let body = "The patient sent a new alert.";
 
       switch (normalizedCommand) {
         case "FOOD":
-          title = "Food Assistance";
+          title = "🍱 Food Assistance";
           body = "The patient is requesting food.";
           break;
 
         case "WATER":
-          title = "Water Assistance";
+          title = "💧 Water Assistance";
           body = "The patient is requesting water.";
           break;
 
         case "ASSISTANCE":
-          title = "Assistance Requested";
+          title = "🙋 Assistance Requested";
           body = "The patient is requesting assistance.";
           break;
 
         case "EMERGENCY":
-          title = "Emergency Alert";
-          body = "The patient has triggered an emergency alert.";
+          title = "🚨 Emergency Alert";
+          body = "The patient has triggered a critical emergency alert!";
           break;
       }
 
@@ -194,17 +216,17 @@ export class DeviceController {
         body,
         data: {
           command: normalizedCommand,
+          alertType: normalizedCommand,
           patientId,
         },
       });
       console.log("Sending push notification for patient:", patientId);
       console.log("Connected non-patients:", connectedNonpatients);
-
     } catch (error) {
       console.error("Push notification error:", error);
     }
 
-    return res.status(createdCommands[0].code).json({
+    return res.status(createdCommands[0]?.code ?? 200).json({
       ...result,
       data: createdCommands,
     });

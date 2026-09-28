@@ -29,6 +29,42 @@ export class PatientNonpatientRepository {
     });
   }
 
+  async findAnyConnection(patientId: string, nonPatientId: string) {
+    return await prisma.patientNonPatient.findUnique({
+      where: {
+        patientId_nonPatientId: {
+          patientId,
+          nonPatientId,
+        },
+      },
+    });
+  }
+
+  async upsertConnection(
+    patientId: string,
+    nonPatientId: string,
+    data: { status: "CONNECTED" | "DISCONNECTED"; currentPatient?: boolean },
+  ) {
+    return await prisma.patientNonPatient.upsert({
+      where: {
+        patientId_nonPatientId: {
+          patientId,
+          nonPatientId,
+        },
+      },
+      update: {
+        status: data.status,
+        currentPatient: data.currentPatient ?? true,
+      },
+      create: {
+        patientId,
+        nonPatientId,
+        status: data.status,
+        currentPatient: data.currentPatient ?? true,
+      },
+    });
+  }
+
   async update(
     patientId: string,
     nonPatientId: string,
