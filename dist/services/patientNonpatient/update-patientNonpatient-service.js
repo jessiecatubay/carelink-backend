@@ -1,3 +1,4 @@
+import { emitConnectionUpdated } from "@/lib/socket";
 import { prisma } from "@/lib/prisma";
 import { PatientNonpatientRepository } from "@/repositories/patient-nonpatient-repository";
 export async function UpdatePatientNonpatientService(patientId, nonPatientId, data) {
@@ -25,6 +26,7 @@ export async function UpdatePatientNonpatientService(patientId, nonPatientId, da
         else {
             await patientNonpatientRepository.update(patientId, nonPatientId, data);
         }
+        emitConnectionUpdated(patientId, nonPatientId, data);
         return {
             code: 200,
             status: "success",

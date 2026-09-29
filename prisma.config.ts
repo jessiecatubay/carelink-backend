@@ -9,7 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // @ts-expect-error
     url: process.env["DATABASE_URL"],
   },
 });

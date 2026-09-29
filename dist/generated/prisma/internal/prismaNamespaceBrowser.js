@@ -39,9 +39,12 @@ export const JsonNull = runtime.JsonNull;
  */
 export const AnyNull = runtime.AnyNull;
 export const ModelName = {
+    PushToken: 'PushToken',
+    PillReminder: 'PillReminder',
     Token: 'Token',
     User: 'User',
     PatientProfile: 'PatientProfile',
+    EmergencyContact: 'EmergencyContact',
     NonPatientProfile: 'NonPatientProfile',
     PatientNonPatient: 'PatientNonPatient',
     VitalReadings: 'VitalReadings',
@@ -56,6 +59,24 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
     RepeatableRead: 'RepeatableRead',
     Serializable: 'Serializable'
 });
+export const PushTokenScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    token: 'token',
+    platform: 'platform',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const PillReminderScalarFieldEnum = {
+    id: 'id',
+    patientId: 'patientId',
+    createdById: 'createdById',
+    title: 'title',
+    scheduledAt: 'scheduledAt',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
 export const TokenScalarFieldEnum = {
     id: 'id',
     type: 'type',
@@ -68,14 +89,18 @@ export const TokenScalarFieldEnum = {
 };
 export const UserScalarFieldEnum = {
     id: 'id',
+    googleId: 'googleId',
     email: 'email',
     password: 'password',
     createdAt: 'createdAt',
     firstName: 'firstName',
     lastName: 'lastName',
     role: 'role',
+    emailVerified: 'emailVerified',
     onBoarded: 'onBoarded',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    notificationsEnabled: 'notificationsEnabled',
+    alertSoundEnabled: 'alertSoundEnabled'
 };
 export const PatientProfileScalarFieldEnum = {
     id: 'id',
@@ -84,14 +109,25 @@ export const PatientProfileScalarFieldEnum = {
     gender: 'gender',
     notes: 'notes',
     connectionCode: 'connectionCode',
-    emergencyContact: 'emergencyContact',
     medicalConditions: 'medicalConditions',
+    deviceOwned: 'deviceOwned',
     currentPatient: 'currentPatient'
+};
+export const EmergencyContactScalarFieldEnum = {
+    id: 'id',
+    name: 'name',
+    relationship: 'relationship',
+    phoneNumber: 'phoneNumber',
+    isPriority: 'isPriority',
+    patientProfileId: 'patientProfileId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
 };
 export const NonPatientProfileScalarFieldEnum = {
     id: 'id',
     userId: 'userId',
     emergencyContact: 'emergencyContact',
+    emergencyContactName: 'emergencyContactName',
     relationship: 'relationship'
 };
 export const PatientNonPatientScalarFieldEnum = {

@@ -1,9 +1,12 @@
+import { emitConnectionUpdated } from "@/lib/socket";
+import { prisma } from "@/lib/prisma";
 import { PatientNonpatientRepository } from "@/repositories/patient-nonpatient-repository";
 import { UserRepository } from "@/repositories/user.repository";
 
 export async function ConnectPatientNonpatientService(
   nonPatientId: string,
   connectionCode: string,
+  relationship?: string,
 ) {
   const userRepository = new UserRepository();
   const patientNonpatientRepository = new PatientNonpatientRepository();
@@ -45,21 +48,25 @@ export async function ConnectPatientNonpatientService(
       };
     }
 
+    // Save or update relationship if provided
+    const trimmedRel = (relationship || "").trim();
+    if (trimmedRel) {
+      await prisma.nonPatientProfile.upsert({
+        where: { userId: nonPatientId },
+        update: { relationship: trimmedRel },
+        create: {
+          userId: nonPatientId,
+          relationship: trimmedRel,
+        },
+      });
+    }
+
     const existingConnection = await patientNonpatientRepository.findAnyConnection(
       patientProfile.userId,
       nonPatientId,
     );
 
     if (existingConnection) {
-      if (existingConnection.status === "CONNECTED") {
-        return {
-          code: 400,
-          status: "error",
-          message: "Patient and non-patient are already connected",
-          connection: existingConnection,
-        };
-      }
-
       await patientNonpatientRepository.update(
         patientProfile.userId,
         nonPatientId,
@@ -69,10 +76,19 @@ export async function ConnectPatientNonpatientService(
         },
       );
 
+      emitConnectionUpdated(patientProfile.userId, nonPatientId, {
+        relationship: trimmedRel,
+        patientName: `${patientProfile.user?.firstName || ""} ${patientProfile.user?.lastName || ""}`.trim(),
+        nonPatientName: `${nonPatient.firstName || ""} ${nonPatient.lastName || ""}`.trim(),
+      });
+
       return {
         code: 200,
         status: "success",
-        message: "Successfully reconnected patientNonpatient",
+        message: "Successfully connected to patient",
+        data: {
+          patientId: patientProfile.userId,
+        },
       };
     }
 
@@ -83,10 +99,19 @@ export async function ConnectPatientNonpatientService(
       currentPatient: true,
     });
 
+    emitConnectionUpdated(patientProfile.userId, nonPatientId, {
+      relationship: trimmedRel,
+      patientName: `${patientProfile.user?.firstName || ""} ${patientProfile.user?.lastName || ""}`.trim(),
+      nonPatientName: `${nonPatient.firstName || ""} ${nonPatient.lastName || ""}`.trim(),
+    });
+
     return {
       code: 201,
       status: "success",
-      message: "Successfully connected patientNonpatient",
+      message: "Successfully connected to patient",
+      data: {
+        patientId: patientProfile.userId,
+      },
     };
   } catch (error: any) {
     console.error("ConnectPatientNonpatientService error:", error);

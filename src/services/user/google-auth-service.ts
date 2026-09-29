@@ -109,6 +109,8 @@ export async function GoogleAuthService(idToken: string) {
           emailVerified: user.emailVerified,
           emergencyContact:
             user.nonPatientProfile?.emergencyContact,
+          googleId: user.googleId,
+          hasPassword: Boolean(user.password),
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

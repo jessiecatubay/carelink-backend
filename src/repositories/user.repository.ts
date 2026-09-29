@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { UserData } from "@/types/user";
+import { capitalizeWords } from "@/utils/string";
 
 export class UserRepository {
   async getById(id: string) {
@@ -48,7 +49,14 @@ export class UserRepository {
               status: "CONNECTED",
             },
             include: {
-              nonPatient: true,
+              nonPatient: {
+                include: {
+                  nonPatientProfile: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
             },
           },
         },
@@ -67,8 +75,14 @@ export class UserRepository {
   }
 
   async create(data: UserData) {
+    const formattedData = {
+      ...data,
+      firstName: data.firstName ? capitalizeWords(data.firstName) : data.firstName,
+      lastName: data.lastName ? capitalizeWords(data.lastName) : data.lastName,
+    };
+
     return await prisma.user.create({
-      data,
+      data: formattedData,
       include: {
         patientProfile: true,
         nonPatientProfile: true,
@@ -123,6 +137,13 @@ export class UserRepository {
       },
       select: {
         userId: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
   }
@@ -139,19 +160,34 @@ export class UserRepository {
     });
 
     if (userType?.role === "PATIENT") {
-      await prisma.patientProfile.update({
+      await prisma.patientProfile.upsert({
         where: {
           userId: userType.id,
         },
-        data,
+        update: data,
+        create: {
+          userId: userType.id,
+          ...data,
+        },
       });
     } else if (userType?.role === "NON_PATIENT") {
-      await prisma.nonPatientProfile.update({
+      const formattedContactName = data.emergencyContactName !== undefined ? capitalizeWords(data.emergencyContactName) : undefined;
+      const formattedRel = data.relationship !== undefined ? capitalizeWords(data.relationship) : undefined;
+
+      await prisma.nonPatientProfile.upsert({
         where: {
           userId: userType.id,
         },
-        data: {
+        update: {
           emergencyContact: data.emergencyContact,
+          emergencyContactName: formattedContactName,
+          relationship: formattedRel,
+        },
+        create: {
+          userId: userType.id,
+          emergencyContact: data.emergencyContact,
+          emergencyContactName: formattedContactName,
+          relationship: formattedRel,
         },
       });
     }
@@ -161,9 +197,13 @@ export class UserRepository {
         email,
       },
       data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: data.firstName !== undefined ? capitalizeWords(data.firstName) : undefined,
+        lastName: data.lastName !== undefined ? capitalizeWords(data.lastName) : undefined,
         password: data.password,
+      },
+      include: {
+        patientProfile: true,
+        nonPatientProfile: true,
       },
     });
   }
