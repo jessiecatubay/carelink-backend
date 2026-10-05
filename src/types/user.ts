@@ -24,6 +24,8 @@ export interface DeviceData {
   temperature: number;
   heartRate: number;
   sensorContact: boolean;
+  batteryLevel: number;
+  batteryVoltage: number;
 }
 
 export interface CommandData {

@@ -5,12 +5,14 @@ export async function CreateVitalsHistoryService(
   deviceId: string,
   temperature: number,
   heartRate: number,
-  sensorContact: boolean
+  sensorContact: boolean,
+  batteryLevel: number,
+  batteryVoltage: number
 ) {
   const vitalsRespository = new VitalsRepository();
 
   try {
-    await vitalsRespository.create({ deviceId, temperature, heartRate, sensorContact });
+    await vitalsRespository.create({ deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage });
 
     return {
       code: 200,

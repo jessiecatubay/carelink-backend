@@ -171,12 +171,14 @@ model PatientNonPatient {
 }
 
 model VitalReadings {
-  id            String   @id @default(uuid())
-  deviceId      String
-  temperature   Float
-  heartRate     Int
-  recordedAt    DateTime @default(now())
-  sensorContact Boolean
+  id                  String   @id @default(uuid())
+  deviceId            String
+  temperature         Float
+  heartRate           Int
+  batteryLevel        Int
+  batteryLevelVoltage Float
+  recordedAt          DateTime @default(now())
+  sensorContact       Boolean
 
   @@index([deviceId, recordedAt])
 }
