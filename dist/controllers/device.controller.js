@@ -3,19 +3,22 @@ import { CreateCommandService, UpdateLatestCommandService, } from "@/services/co
 import { CreateVitalsHistoryService, GetRecentVitalsHistoryService, GetVitalsHistoryService, } from "@/services/device";
 import { SendDeviceCommand } from "@/services/mqtt.service";
 import { parsePagination } from "@/utils/pagination";
+import { sendPatientCaregiversNotification } from "../services/notification.service";
+import { GetUserByDeviceService } from "@/services/patientProfile";
 export class DeviceController {
     patientVitals = async (req, res) => {
         const { deviceId, temperature, heartRate, sensorContact } = req.body;
         const receivedAt = new Date().toISOString();
+        const user = await GetUserByDeviceService(deviceId);
         console.log("Received device vitals:", { deviceId, temperature, heartRate, sensorContact }, "receivedAt", receivedAt);
         await CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact);
         const payload = {
             ...{ deviceId, temperature, heartRate, sensorContact },
             receivedAt,
         };
-        if (req.user?.role === "PATIENT" && req.user.id) {
-            emitPatientVitals(req.user.id, payload);
-        }
+        if (!user.data?.userId)
+            return;
+        emitPatientVitals(user.data?.userId, payload);
         return res.status(200).json({
             success: true,
             message: "Vitals received",
@@ -43,20 +46,38 @@ export class DeviceController {
     command = async (req, res) => {
         const { deviceId, command, patientId } = req.body;
         console.log("Patient pressed a command", req.body);
-        const connectedNonpatients = req.body.connectedNonpatients;
+        const rawConnected = req.body.connectedNonpatients;
+        const connectedNonpatients = Array.isArray(rawConnected)
+            ? rawConnected
+                .map((item) => typeof item === "string" ? item : item?.nonPatientId)
+                .filter(Boolean)
+            : [];
         const result = SendDeviceCommand(deviceId, command, patientId);
         const createdCommands = [];
         const payload = [];
-        if (command.toLowerCase() === "satisfied") {
+        const normalizedCommand = (command || "").toUpperCase();
+        if (normalizedCommand === "SATISFIED") {
             let updatedCommandId;
-            for (const { nonPatientId } of connectedNonpatients) {
+            for (const nonPatientId of connectedNonpatients) {
                 const updated = await UpdateLatestCommandService(nonPatientId, {
                     status: "Satisfied",
                 }, patientId);
                 updatedCommandId ??= updated.data?.id;
             }
-            if (updatedCommandId) {
-                emitSatisfied(patientId, updatedCommandId);
+            emitSatisfied(patientId, updatedCommandId ?? "satisfied");
+            try {
+                await sendPatientCaregiversNotification(patientId, {
+                    title: "✅ Request Satisfied",
+                    body: "The patient's request has been marked as satisfied.",
+                    data: {
+                        command: "SATISFIED",
+                        alertType: "SATISFIED",
+                        patientId,
+                    },
+                });
+            }
+            catch (error) {
+                console.error("Push notification error:", error);
             }
             return res.status(200).json({
                 success: true,
@@ -65,23 +86,76 @@ export class DeviceController {
             });
         }
         for (const nonPatientId of connectedNonpatients) {
-            const createdCommand = await CreateCommandService(deviceId, command.toUpperCase(), patientId, nonPatientId);
+            const createdCommand = await CreateCommandService(deviceId, normalizedCommand, patientId, nonPatientId);
             createdCommands.push(createdCommand);
             payload.push({
+                id: createdCommand.data?.id,
                 deviceId,
-                command,
+                command: normalizedCommand,
+                alertType: normalizedCommand,
                 nonPatientId,
-                recordedAt: createdCommand.data?.recordedAt,
-                status: createdCommand.data?.status,
+                recordedAt: createdCommand.data?.recordedAt
+                    ? new Date(createdCommand.data.recordedAt).toISOString()
+                    : new Date().toISOString(),
+                status: createdCommand.data?.status ?? "Pending",
+                patientId,
             });
         }
         try {
-            emitPatientAlert(patientId, payload[0]);
+            if (payload.length > 0) {
+                emitPatientAlert(patientId, payload[0]);
+            }
+            else {
+                emitPatientAlert(patientId, {
+                    deviceId,
+                    command: normalizedCommand,
+                    alertType: normalizedCommand,
+                    recordedAt: new Date().toISOString(),
+                    status: "Pending",
+                    patientId,
+                });
+            }
         }
         catch (error) {
             console.error("Socket not initialized:", error);
         }
-        return res.status(createdCommands[0].code).json({
+        try {
+            let title = "CareLink Alert";
+            let body = "The patient sent a new alert.";
+            switch (normalizedCommand) {
+                case "FOOD":
+                    title = "🍱 Food Assistance";
+                    body = "The patient is requesting food.";
+                    break;
+                case "WATER":
+                    title = "💧 Water Assistance";
+                    body = "The patient is requesting water.";
+                    break;
+                case "ASSISTANCE":
+                    title = "🙋 Assistance Requested";
+                    body = "The patient is requesting assistance.";
+                    break;
+                case "EMERGENCY":
+                    title = "🚨 Emergency Alert";
+                    body = "The patient has triggered a critical emergency alert!";
+                    break;
+            }
+            await sendPatientCaregiversNotification(patientId, {
+                title,
+                body,
+                data: {
+                    command: normalizedCommand,
+                    alertType: normalizedCommand,
+                    patientId,
+                },
+            });
+            console.log("Sending push notification for patient:", patientId);
+            console.log("Connected non-patients:", connectedNonpatients);
+        }
+        catch (error) {
+            console.error("Push notification error:", error);
+        }
+        return res.status(createdCommands[0]?.code ?? 200).json({
             ...result,
             data: createdCommands,
         });

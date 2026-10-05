@@ -1,5 +1,6 @@
 import { UserRepository } from "@/repositories/user.repository";
 import { hashPassword } from "@/utils/password";
+import { capitalizeWords } from "@/utils/string";
 import { CreateEmailVerificationService } from "@/services/auth/verify-email-service";
 
 export async function SignupService(
@@ -12,6 +13,8 @@ export async function SignupService(
 
   try {
     const normalizedEmail = email.trim().toLowerCase();
+    const formattedFirstName = capitalizeWords(firstName);
+    const formattedLastName = capitalizeWords(lastName);
 
     const existingUser = await userRepository.findByEmail(
       normalizedEmail,
@@ -28,8 +31,8 @@ export async function SignupService(
     const hashedPass = hashPassword(password);
 
     const user = await userRepository.create({
-      firstName,
-      lastName,
+      firstName: formattedFirstName,
+      lastName: formattedLastName,
       email: normalizedEmail,
       password: hashedPass,
     });

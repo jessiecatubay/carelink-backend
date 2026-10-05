@@ -2,6 +2,7 @@ import { Role } from "@/generated/prisma/browser";
 import { PatientProfile } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { OnboardingData } from "@/types/user";
+import { capitalizeWords } from "@/utils/string";
 
 export async function UserOnboardingService(
   userId: string,
@@ -50,13 +51,24 @@ export async function UserOnboardingService(
         await tx.nonPatientProfile.create({
           data: {
             userId: user.id,
-            relationship: data.relationship,
+            relationship: data.relationship ? capitalizeWords(data.relationship) : data.relationship,
             emergencyContact: data.emergencyContact,
+            emergencyContactName: data.emergencyContactName ? capitalizeWords(data.emergencyContactName) : data.emergencyContactName,
           },
         });
       }
 
-      return updatedUser;
+      const fullUser = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        include: {
+          patientProfile: true,
+          nonPatientProfile: true,
+        },
+      });
+
+      return fullUser;
     });
 
     return {

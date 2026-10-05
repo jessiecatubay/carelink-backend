@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { EmergencyContactData } from "@/types/emergency-contact";
+import { capitalizeWords } from "@/utils/string";
 
 export class EmergencyContactRepository {
   async getById(id: string) {
@@ -22,14 +23,22 @@ export class EmergencyContactRepository {
 
   async create(data: EmergencyContactData) {
     return await prisma.emergencyContact.create({
-      data,
+      data: {
+        ...data,
+        name: data.name ? capitalizeWords(data.name) : data.name,
+        relationship: data.relationship ? capitalizeWords(data.relationship) : data.relationship,
+      },
     });
   }
 
   async update(id: string, data: Partial<EmergencyContactData>) {
     return await prisma.emergencyContact.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        name: data.name !== undefined ? capitalizeWords(data.name) : undefined,
+        relationship: data.relationship !== undefined ? capitalizeWords(data.relationship) : undefined,
+      },
     });
   }
 

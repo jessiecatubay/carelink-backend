@@ -10,5 +10,15 @@ export class PatientProfileRepository {
             },
         });
     }
+    async getUserByDeviceId(deviceId) {
+        return await prisma.patientProfile.findUnique({
+            where: {
+                deviceOwned: deviceId,
+            },
+            select: {
+                userId: true,
+            }
+        });
+    }
 }
 //# sourceMappingURL=patient-profile.repository.js.map

@@ -1,5 +1,6 @@
 import { Role } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/prisma";
+import { capitalizeWords } from "@/utils/string";
 export async function UserOnboardingService(userId, role, data) {
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -38,12 +39,22 @@ export async function UserOnboardingService(userId, role, data) {
                 await tx.nonPatientProfile.create({
                     data: {
                         userId: user.id,
-                        relationship: data.relationship,
+                        relationship: data.relationship ? capitalizeWords(data.relationship) : data.relationship,
                         emergencyContact: data.emergencyContact,
+                        emergencyContactName: data.emergencyContactName ? capitalizeWords(data.emergencyContactName) : data.emergencyContactName,
                     },
                 });
             }
-            return updatedUser;
+            const fullUser = await tx.user.findUnique({
+                where: {
+                    id: userId,
+                },
+                include: {
+                    patientProfile: true,
+                    nonPatientProfile: true,
+                },
+            });
+            return fullUser;
         });
         return {
             code: 200,

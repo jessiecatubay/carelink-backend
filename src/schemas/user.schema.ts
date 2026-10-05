@@ -46,6 +46,7 @@ export const onboardingSchema = requestSchema(
     notes: z.string().trim().optional(),
     relationship: z.string().trim(),
     emergencyContact: z.string().trim(),
+    emergencyContactName: z.string().trim().optional(),
     onBoarded: z.boolean(),
   })
 );

@@ -24,8 +24,8 @@ export * from "./enums";
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more Tokens
- * const tokens = await prisma.token.findMany()
+ * // Fetch zero or more PushTokens
+ * const pushTokens = await prisma.pushToken.findMany()
  * ```
  *
  * Read more in our [docs](https://pris.ly/d/client).

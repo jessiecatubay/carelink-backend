@@ -15,6 +15,7 @@ export class VitalsRepository {
                     some: {
                         nonPatientId,
                         status: "CONNECTED",
+                        currentPatient: true,
                     },
                 },
             },

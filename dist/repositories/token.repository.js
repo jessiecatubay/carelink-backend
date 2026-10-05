@@ -66,5 +66,66 @@ export class TokenRepository {
             data: { revokedAt: new Date() },
         });
     }
+    async createPasswordResetToken(params) {
+        const { userId, token, expiresAt } = params;
+        return prisma.token.create({
+            data: {
+                userId,
+                token,
+                expiresAt,
+                type: TokenType.PASSWORD_RESET,
+            },
+        });
+    }
+    async revokeActivePasswordResetTokens(userId) {
+        return prisma.token.updateMany({
+            where: {
+                userId,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+            },
+            data: {
+                revokedAt: new Date(),
+            },
+        });
+    }
+    async findActivePasswordResetToken(token) {
+        return prisma.token.findFirst({
+            where: {
+                token,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+                expiresAt: {
+                    gt: new Date(),
+                },
+            },
+        });
+    }
+    async createPasswordResetAuthorizationToken(params) {
+        const { userId, token, expiresAt } = params;
+        return prisma.token.create({
+            data: {
+                userId,
+                token,
+                expiresAt,
+                type: TokenType.PASSWORD_RESET,
+            },
+        });
+    }
+    async findActivePasswordResetAuthorizationToken(token) {
+        return prisma.token.findFirst({
+            where: {
+                token,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+                expiresAt: {
+                    gt: new Date(),
+                },
+            },
+        });
+    }
 }
 //# sourceMappingURL=token.repository.js.map

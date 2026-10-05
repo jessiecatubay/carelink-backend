@@ -53,8 +53,18 @@ export class UserController {
 
     return res.status(result.code).json(result);
   };
-  public update = async (req: Request, res: Response) => {
-    const { email, ...data }: { email: string } & Partial<UserData> = req.body;
+  public update = async (req: AuthenticatedRequest, res: Response) => {
+    const email = req.body?.email || req.user?.email;
+    const data = { ...req.body };
+    delete data.email;
+
+    if (!email) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        message: "Email is required.",
+      });
+    }
 
     const result = await UpdateUserService(email, data);
 

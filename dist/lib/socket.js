@@ -17,6 +17,30 @@ const jwtPayloadSchema = z.object({
 export const getPatientRoom = (patientId) => {
     return `patient:${patientId}`;
 };
+const patientPresence = new Map();
+const PATIENT_OFFLINE_TIMEOUT = 30_000;
+const checkPatientOffline = (patientId) => {
+    const presence = patientPresence.get(patientId);
+    if (!presence) {
+        return;
+    }
+    const elapsed = Date.now() - presence.lastHeartbeat;
+    if (elapsed >= PATIENT_OFFLINE_TIMEOUT && presence.isOnline) {
+        presence.isOnline = false;
+        const room = getPatientRoom(patientId);
+        io?.to(room).emit("patientConnectionStatus", {
+            patientId,
+            status: "DISCONNECTED",
+            timestamp: new Date().toISOString(),
+        });
+        console.log(`🔴 Patient ${patientId} is now OFFLINE`);
+    }
+};
+setInterval(() => {
+    for (const [patientId] of patientPresence) {
+        checkPatientOffline(patientId);
+    }
+}, 5000);
 export const initSocket = (server) => {
     io = new Server(server, {
         cors: {
@@ -25,6 +49,11 @@ export const initSocket = (server) => {
         },
         transports: ["websocket"],
     });
+    setInterval(() => {
+        for (const patientId of patientPresence.keys()) {
+            checkPatientOffline(patientId);
+        }
+    }, 5000);
     /**
      * Authenticate every socket connection
      */
@@ -55,6 +84,8 @@ export const initSocket = (server) => {
         console.log("🟢 Socket connected:", socket.id);
         console.log("User:", user.userId);
         console.log("Role:", user.role);
+        // Join individual user room for direct notifications
+        socket.join(`user:${user.userId}`);
         /**
          * ============================================================
          * PATIENT
@@ -70,6 +101,22 @@ export const initSocket = (server) => {
             socket.join(room);
             console.log(`👤 Patient joined room: ${room}`);
         }
+        socket.on("patient:heartbeat", () => {
+            if (user.role !== "PATIENT") {
+                return;
+            }
+            patientPresence.set(user.userId, {
+                lastHeartbeat: Date.now(),
+                isOnline: true,
+            });
+            console.log(`💓 Heartbeat received from patient ${user.userId}`);
+            const room = getPatientRoom(user.userId);
+            io?.to(room).emit("patientConnectionStatus", {
+                patientId: user.userId,
+                status: "CONNECTED",
+                timestamp: new Date().toISOString(),
+            });
+        });
         /**
          * ============================================================
          * NON-PATIENT / CAREGIVER
@@ -98,6 +145,14 @@ export const initSocket = (server) => {
                     const room = getPatientRoom(connection.patientId);
                     socket.join(room);
                     console.log(`👨‍⚕️ Non-patient ${user.userId} joined ${room}`);
+                    const presence = patientPresence.get(connection.patientId);
+                    if (presence?.isOnline) {
+                        socket.emit("patientConnectionStatus", {
+                            patientId: connection.patientId,
+                            status: "CONNECTED",
+                            timestamp: new Date(presence.lastHeartbeat).toISOString(),
+                        });
+                    }
                 }
             }
             catch (error) {
@@ -221,5 +276,45 @@ export const emitSatisfied = (patientId, commandId) => {
         recordedAt: new Date().toISOString(),
     });
     console.log(`✅ Satisfied event emitted to ${room}`);
+};
+/**
+ * Real-time event when a Patient and Non-Patient connect or update their pairing.
+ */
+export const emitConnectionUpdated = (patientId, nonPatientId, payload) => {
+    if (!io) {
+        console.warn("Socket.io is not initialized");
+        return;
+    }
+    const patientRoom = getPatientRoom(patientId);
+    const userPatientRoom = `user:${patientId}`;
+    const userNonPatientRoom = `user:${nonPatientId}`;
+    // Automatically join all existing sockets of nonPatientId into patientRoom
+    try {
+        io.in(userNonPatientRoom).socketsJoin(patientRoom);
+        console.log(`👨‍⚕️ Sockets in ${userNonPatientRoom} joined ${patientRoom}`);
+    }
+    catch (err) {
+        console.error("Failed to socketsJoin:", err);
+    }
+    const eventPayload = {
+        patientId,
+        nonPatientId,
+        status: "CONNECTED",
+        timestamp: new Date().toISOString(),
+        ...(payload || {}),
+    };
+    // Broadcast to patient room, patient personal user room, and caregiver personal user room
+    io.to(patientRoom).emit("connectionUpdated", eventPayload);
+    io.to(userPatientRoom).emit("connectionUpdated", eventPayload);
+    io.to(userNonPatientRoom).emit("connectionUpdated", eventPayload);
+    // Also emit patientConnectionStatus to nonpatient room
+    const presence = patientPresence.get(patientId);
+    const isOnline = presence?.isOnline ?? true;
+    io.to(userNonPatientRoom).emit("patientConnectionStatus", {
+        patientId,
+        status: isOnline ? "CONNECTED" : "DISCONNECTED",
+        timestamp: new Date().toISOString(),
+    });
+    console.log(`🔗 Connection updated event emitted for patient ${patientId} and caregiver ${nonPatientId}`);
 };
 //# sourceMappingURL=socket.js.map

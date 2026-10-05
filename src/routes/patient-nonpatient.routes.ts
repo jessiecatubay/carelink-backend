@@ -13,6 +13,16 @@ router.post(
 );
 
 router.post(
+  "/v1/connected-caregivers",
+  patientNonpatientController.findConnectedCaregivers,
+);
+
+router.post(
+  "/v1/preview-patient",
+  patientNonpatientController.previewPatient,
+);
+
+router.post(
   "/v1/connect",
   // validateSchema(connectSchema),
   patientNonpatientController.connect,
