@@ -53,8 +53,18 @@ export class UserController {
 
     return res.status(result.code).json(result);
   };
-  public update = async (req: Request, res: Response) => {
-    const { email, ...data }: { email: string } & Partial<UserData> = req.body;
+  public update = async (req: AuthenticatedRequest, res: Response) => {
+    const email = req.body?.email || req.user?.email;
+    const data = { ...req.body };
+    delete data.email;
+
+    if (!email) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        message: "Email is required.",
+      });
+    }
 
     const result = await UpdateUserService(email, data);
 
@@ -62,17 +72,26 @@ export class UserController {
   };
 
   public onBoarded = async (req: Request, res: Response) => {
-    const { userId, role, ...data } = req.body;
-    if (role === "NON-PATIENT") {
-      const nonPatientRole = "NON_PATIENT";
-      const result = await UserOnboardingService(userId, nonPatientRole, data);
+    const userId = req.body?.userId || (req as any).user?.id;
+    const { role, ...data } = req.body;
 
-      return res.status(result.code).json(result);
+    if (!userId) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        message: "User ID is required.",
+      });
     }
-    console.log("User onboarding", req.body);
-    const roleUpper = typeof role === "string" ? role.toUpperCase() : role;
 
-    const result = await UserOnboardingService(userId, roleUpper, data);
+    if (!role) {
+      return res.status(400).json({
+        code: 400,
+        status: "error",
+        message: "Role is required.",
+      });
+    }
+
+    const result = await UserOnboardingService(userId, role, data);
 
     return res.status(result.code).json(result);
   };

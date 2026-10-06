@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma.js";
 export class PatientNonpatientRepository {
     async create(data) {
         return await prisma.patientNonPatient.create({ data });
@@ -8,7 +8,6 @@ export class PatientNonpatientRepository {
             where: {
                 patientId,
                 status: "CONNECTED",
-                currentPatient: true
             },
             select: {
                 nonPatientId: true,
@@ -24,6 +23,36 @@ export class PatientNonpatientRepository {
             },
         });
     }
+    async findAnyConnection(patientId, nonPatientId) {
+        return await prisma.patientNonPatient.findUnique({
+            where: {
+                patientId_nonPatientId: {
+                    patientId,
+                    nonPatientId,
+                },
+            },
+        });
+    }
+    async upsertConnection(patientId, nonPatientId, data) {
+        return await prisma.patientNonPatient.upsert({
+            where: {
+                patientId_nonPatientId: {
+                    patientId,
+                    nonPatientId,
+                },
+            },
+            update: {
+                status: data.status,
+                currentPatient: data.currentPatient ?? true,
+            },
+            create: {
+                patientId,
+                nonPatientId,
+                status: data.status,
+                currentPatient: data.currentPatient ?? true,
+            },
+        });
+    }
     async update(patientId, nonPatientId, data) {
         return await prisma.patientNonPatient.update({
             where: {
@@ -33,6 +62,21 @@ export class PatientNonpatientRepository {
                 },
             },
             data,
+        });
+    }
+    async findConnectedPatients(nonPatientId) {
+        return await prisma.patientNonPatient.findMany({
+            where: {
+                nonPatientId,
+                status: "CONNECTED",
+            },
+            include: {
+                patient: {
+                    include: {
+                        patientProfile: true,
+                    },
+                },
+            },
         });
     }
 }

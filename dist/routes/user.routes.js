@@ -1,18 +1,26 @@
-import { authenticateToken } from "@/middlewares/authenticate-token";
-import { validateSchema } from "@/middlewares/validate-schema";
-import { loginSchema, refreshSchema, signupSchema, } from "@/schemas/user.schema";
+import { authenticateToken } from "../middlewares/authenticate-token.js";
+import { validateSchema } from "../middlewares/validate-schema.js";
+import { loginSchema, refreshSchema, signupSchema, } from "../schemas/user.schema.js";
 import { Router } from "express";
-import { UserController } from "../controllers/user.controller";
+import { UserController } from "../controllers/user.controller.js";
 const router = Router();
 const userController = new UserController();
 router.post("/v1/signup", validateSchema(signupSchema), userController.signup);
 router.post("/v1/login", validateSchema(loginSchema), userController.login);
 router.post("/v1/refresh", validateSchema(refreshSchema), userController.refresh);
 router.post("/v1/user-onboarding", userController.onBoarded);
+router.post("/v1/forgot-password", userController.forgotPassword);
+router.post("/v1/verify-reset-code", userController.verifyResetCode);
+router.post("/v1/reset-password", userController.resetPassword);
+router.post("/v1/verify-email", userController.verifyEmail);
+router.post("/v1/resend-email-verification", userController.resendEmailVerification);
+router.post("/v1/google-auth", userController.googleAuth);
 router.use(authenticateToken);
 router.post("/v1/get-user-by-id", 
 // validateSchema(getUserByIdSchema),
 userController.getById);
 router.get("/v1/me", userController.me);
+router.put("/v1/update-user", userController.update);
+router.post("/v1/change-password", userController.changePassword);
 export default router;
 //# sourceMappingURL=user.routes.js.map

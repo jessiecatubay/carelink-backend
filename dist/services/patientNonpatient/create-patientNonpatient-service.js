@@ -1,4 +1,4 @@
-import { PatientNonpatientRepository } from "@/repositories/patient-nonpatient-repository";
+import { PatientNonpatientRepository } from "../../repositories/patient-nonpatient-repository.js";
 export async function CreatePatientNonpatientService(data) {
     const patientNonpatientRepository = new PatientNonpatientRepository();
     try {

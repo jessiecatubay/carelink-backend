@@ -1,7 +1,20 @@
-import { Role } from "@/generated/prisma/browser";
-import { prisma } from "@/lib/prisma";
+import { Role } from "../../generated/prisma/client.js";
+import { TokenType } from "../../generated/prisma/enums.js";
+import { prisma } from "../../lib/prisma.js";
+import { generateCode } from "../../utils/generateConnectionCode.js";
+import { generateTokens } from "../../utils/jwt.js";
+import { capitalizeWords } from "../../utils/string.js";
 export async function UserOnboardingService(userId, role, data) {
     try {
+        const rawRole = typeof role === "string" ? role.replace("-", "_").toUpperCase() : role;
+        const normalizedRole = rawRole;
+        if (normalizedRole !== Role.PATIENT && normalizedRole !== Role.NON_PATIENT) {
+            return {
+                code: 400,
+                status: "error",
+                message: "Invalid role. Role must be PATIENT or NON_PATIENT",
+            };
+        }
         const result = await prisma.$transaction(async (tx) => {
             const user = await tx.user.findUnique({
                 where: {
@@ -11,39 +24,107 @@ export async function UserOnboardingService(userId, role, data) {
             if (!user) {
                 throw new Error("USER_NOT_FOUND");
             }
-            if (role !== Role.PATIENT && role !== Role.NON_PATIENT) {
-                throw new Error("INVALID_ROLE");
-            }
-            const updatedUser = await tx.user.update({
+            await tx.user.update({
                 where: {
                     id: userId,
                 },
                 data: {
-                    role,
+                    role: normalizedRole,
                     onBoarded: true,
                 },
             });
-            if (role === Role.PATIENT) {
-                await tx.patientProfile.create({
-                    data: {
-                        age: data.age,
-                        gender: data.gender,
+            if (normalizedRole === Role.PATIENT) {
+                const existingProfile = await tx.patientProfile.findUnique({
+                    where: {
+                        userId: user.id,
+                    },
+                });
+                const connectionCode = existingProfile?.connectionCode || generateCode();
+                const parsedAge = data.age !== undefined && data.age !== null && data.age !== ""
+                    ? Number(data.age)
+                    : undefined;
+                await tx.patientProfile.upsert({
+                    where: {
+                        userId: user.id,
+                    },
+                    update: {
+                        age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : undefined,
+                        gender: data.gender ? capitalizeWords(data.gender) : data.gender,
                         medicalConditions: data.medicalConditions,
                         notes: data.notes,
+                        ...(!existingProfile?.connectionCode ? { connectionCode } : {}),
+                    },
+                    create: {
+                        age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : null,
+                        gender: data.gender ? capitalizeWords(data.gender) : null,
+                        medicalConditions: data.medicalConditions || null,
+                        notes: data.notes || null,
                         userId: user.id,
+                        connectionCode,
                     },
                 });
             }
-            if (role === Role.NON_PATIENT) {
-                await tx.nonPatientProfile.create({
-                    data: {
+            if (normalizedRole === Role.NON_PATIENT) {
+                await tx.nonPatientProfile.upsert({
+                    where: {
                         userId: user.id,
-                        relationship: data.relationship,
+                    },
+                    update: {
+                        relationship: data.relationship ? capitalizeWords(data.relationship) : data.relationship,
                         emergencyContact: data.emergencyContact,
+                        emergencyContactName: data.emergencyContactName ? capitalizeWords(data.emergencyContactName) : data.emergencyContactName,
+                    },
+                    create: {
+                        userId: user.id,
+                        relationship: data.relationship ? capitalizeWords(data.relationship) : data.relationship,
+                        emergencyContact: data.emergencyContact,
+                        emergencyContactName: data.emergencyContactName ? capitalizeWords(data.emergencyContactName) : data.emergencyContactName,
                     },
                 });
             }
-            return updatedUser;
+            const fullUser = await tx.user.findUnique({
+                where: {
+                    id: userId,
+                },
+                include: {
+                    patientProfile: true,
+                    nonPatientProfile: true,
+                },
+            });
+            if (!fullUser) {
+                throw new Error("USER_NOT_FOUND");
+            }
+            const tokens = generateTokens({
+                id: fullUser.id,
+                email: fullUser.email ?? "",
+                role: fullUser.role,
+            });
+            await tx.token.create({
+                data: {
+                    userId: fullUser.id,
+                    token: tokens.refreshToken,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    type: TokenType.REFRESH,
+                },
+            });
+            return {
+                user: {
+                    id: fullUser.id,
+                    firstName: fullUser.firstName,
+                    lastName: fullUser.lastName,
+                    email: fullUser.email,
+                    role: fullUser.role,
+                    onBoarded: fullUser.onBoarded,
+                    emergencyContact: fullUser.nonPatientProfile?.emergencyContact,
+                    emergencyContactName: fullUser.nonPatientProfile?.emergencyContactName,
+                    googleId: fullUser.googleId,
+                    hasPassword: Boolean(fullUser.password),
+                    patientProfile: fullUser.patientProfile,
+                    nonPatientProfile: fullUser.nonPatientProfile,
+                },
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken,
+            };
         });
         return {
             code: 200,

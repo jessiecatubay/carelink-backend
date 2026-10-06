@@ -1,13 +1,16 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../lib/prisma.js";
 export const GetMeService = async (userId) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-            }
+            include: {
+                patientProfile: {
+                    include: {
+                        emergencyContacts: true,
+                    },
+                },
+                nonPatientProfile: true,
+            },
         });
         if (!user) {
             return { code: 404, status: "error", message: "User not found" };

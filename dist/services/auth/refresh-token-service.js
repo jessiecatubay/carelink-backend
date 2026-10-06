@@ -1,6 +1,6 @@
-import { UserRepository } from "@/repositories/user.repository";
-import { TokenRepository } from "@/repositories/token.repository";
-import { generateTokens, TokenExpiry, verifyRefreshToken } from "@/utils/jwt";
+import { UserRepository } from "../../repositories/user.repository.js";
+import { TokenRepository } from "../../repositories/token.repository.js";
+import { generateTokens, TokenExpiry, verifyRefreshToken } from "../../utils/jwt.js";
 export async function RefreshTokenService(refreshToken) {
     if (!refreshToken) {
         return {

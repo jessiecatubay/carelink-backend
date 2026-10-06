@@ -1,7 +1,7 @@
-import { UserRepository } from "@/repositories/user.repository";
-import { generateTokens } from "@/utils/jwt";
-import { verifyPassword } from "@/utils/password";
-import { TokenRepository } from "@/repositories/token.repository";
+import { UserRepository } from "../../repositories/user.repository.js";
+import { generateTokens } from "../../utils/jwt.js";
+import { verifyPassword } from "../../utils/password.js";
+import { TokenRepository } from "../../repositories/token.repository.js";
 export async function LoginService(input) {
     const userRepository = new UserRepository();
     try {
@@ -10,6 +10,14 @@ export async function LoginService(input) {
             !user.password ||
             !verifyPassword(input.password, user.password)) {
             return { code: 400, status: "error", message: "Invalid Credentials" };
+        }
+        if (!user.emailVerified) {
+            return {
+                code: 403,
+                status: "error",
+                emailVerified: false,
+                message: "Please verify your email address before logging in.",
+            };
         }
         const tokens = generateTokens({
             id: user.id,
@@ -33,6 +41,9 @@ export async function LoginService(input) {
                     email: user.email,
                     role: user.role,
                     onBoarded: user.onBoarded,
+                    emergencyContact: user.nonPatientProfile?.emergencyContact,
+                    googleId: user.googleId,
+                    hasPassword: Boolean(user.password),
                 },
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,

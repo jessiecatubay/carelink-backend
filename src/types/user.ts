@@ -10,6 +10,8 @@ export interface UserData {
   onBoarded?: boolean;
   emailVerified?: boolean;
   emergencyContact?: string;
+  emergencyContactName?: string;
+  relationship?: string;
 }
 
 export interface LoginInput {
@@ -22,6 +24,8 @@ export interface DeviceData {
   temperature: number;
   heartRate: number;
   sensorContact: boolean;
+  batteryLevel: number;
+  batteryVoltage: number;
 }
 
 export interface CommandData {
@@ -52,6 +56,7 @@ export interface PatientProfile {
 export interface NonPatientProfile {
   relationship: string | null;
   emergencyContact: string | null;
+  emergencyContactName?: string | null;
 }
 
 export interface OnboardingData {
@@ -63,6 +68,7 @@ export interface OnboardingData {
   gender?: string | null;
   notes?: string | null;
   emergencyContact?: string | null;
+  emergencyContactName?: string | null;
   medicalConditions?: string | null;
   connectionCode?: string | null;
   relationship?: string | null;

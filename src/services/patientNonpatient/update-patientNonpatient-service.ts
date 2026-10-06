@@ -1,3 +1,4 @@
+import { emitConnectionUpdated } from "@/lib/socket";
 import { prisma } from "@/lib/prisma";
 import { PatientNonpatientRepository } from "@/repositories/patient-nonpatient-repository";
 import { PatientNonPatient } from "@/types/user";
@@ -32,6 +33,8 @@ export async function UpdatePatientNonpatientService(
     } else {
       await patientNonpatientRepository.update(patientId, nonPatientId, data);
     }
+
+    emitConnectionUpdated(patientId, nonPatientId, data);
 
     return {
       code: 200,

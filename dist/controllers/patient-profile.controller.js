@@ -1,4 +1,5 @@
-import { GenerateConnectionCodeService, UpdatePatientProfileService } from "@/services/patientProfile";
+import { GenerateConnectionCodeService, UpdatePatientProfileService } from "../services/patientProfile/index.js";
+import { RegisterDeviceOwnedService } from "../services/patientProfile/index.js";
 export class UpdatePatientProfileController {
     update = async (req, res) => {
         const { patientId, ...data } = req.body;
@@ -8,6 +9,13 @@ export class UpdatePatientProfileController {
     generateConnectionCode = async (req, res) => {
         const { id } = req.body;
         const result = await GenerateConnectionCodeService(id);
+        return res.status(result.code).json(result);
+    };
+    registerDeviceOwned = async (req, res) => {
+        const { deviceId } = req.body;
+        if (!req?.user?.id)
+            return;
+        const result = await RegisterDeviceOwnedService(req.user.id, deviceId);
         return res.status(result.code).json(result);
     };
 }

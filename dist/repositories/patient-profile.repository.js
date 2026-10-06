@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma.js";
 export class PatientProfileRepository {
     async update(id, data) {
         return await prisma.user.update({
@@ -8,6 +8,16 @@ export class PatientProfileRepository {
                     update: data,
                 },
             },
+        });
+    }
+    async getUserByDeviceId(deviceId) {
+        return await prisma.patientProfile.findUnique({
+            where: {
+                deviceOwned: deviceId,
+            },
+            select: {
+                userId: true,
+            }
         });
     }
 }

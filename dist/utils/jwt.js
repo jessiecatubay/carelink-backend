@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { TokenRepository } from "@/repositories/token.repository";
+import { TokenRepository } from "../repositories/token.repository.js";
 const JWT_SECRET = process.env.JWT_SECRET || "access-secret";
 export var TokenExpiry;
 (function (TokenExpiry) {

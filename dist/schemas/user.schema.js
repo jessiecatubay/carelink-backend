@@ -1,4 +1,4 @@
-import { requestSchema, uuidSchema } from "@/schemas/common.schema";
+import { requestSchema, uuidSchema } from "./common.schema.js";
 import { z } from "zod";
 const roleSchema = z.enum(["PATIENT", "NON_PATIENT", "USER"]);
 export const signupSchema = requestSchema(z
@@ -34,6 +34,7 @@ export const onboardingSchema = requestSchema(z.looseObject({
     notes: z.string().trim().optional(),
     relationship: z.string().trim(),
     emergencyContact: z.string().trim(),
+    emergencyContactName: z.string().trim().optional(),
     onBoarded: z.boolean(),
 }));
 export const getUserByIdSchema = requestSchema(z.object({ id: uuidSchema }).strict());

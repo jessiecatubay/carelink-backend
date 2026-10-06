@@ -145,11 +145,12 @@ model EmergencyContact {
 }
 
 model NonPatientProfile {
-  id               String  @id @default(uuid())
-  userId           String  @unique
-  emergencyContact String?
-  relationship     String?
-  user             User    @relation(fields: [userId], references: [id])
+  id                   String  @id @default(uuid())
+  userId               String  @unique
+  emergencyContact     String?
+  emergencyContactName String?
+  relationship         String?
+  user                 User    @relation(fields: [userId], references: [id])
 }
 
 model PatientNonPatient {
@@ -170,12 +171,14 @@ model PatientNonPatient {
 }
 
 model VitalReadings {
-  id            String   @id @default(uuid())
-  deviceId      String
-  temperature   Float
-  heartRate     Int
-  recordedAt    DateTime @default(now())
-  sensorContact Boolean
+  id                  String   @id @default(uuid())
+  deviceId            String
+  temperature         Float
+  heartRate           Int
+  batteryLevel        Int
+  batteryVoltage      Float
+  recordedAt          DateTime @default(now())
+  sensorContact       Boolean
 
   @@index([deviceId, recordedAt])
 }

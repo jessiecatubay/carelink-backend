@@ -89,7 +89,7 @@ export const initSocket = (server: HttpServer) => {
   /**
    * Authenticate every socket connection
    */
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
 
@@ -105,9 +105,16 @@ export const initSocket = (server: HttpServer) => {
         return next(new Error("Invalid authentication token"));
       }
 
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+
+      const role = dbUser?.role ?? decoded.role ?? "USER";
+
       socket.data.user = {
         userId,
-        role: decoded.role ?? "USER",
+        role,
       } satisfies SocketUser;
 
       next();
@@ -123,6 +130,9 @@ export const initSocket = (server: HttpServer) => {
     console.log("🟢 Socket connected:", socket.id);
     console.log("User:", user.userId);
     console.log("Role:", user.role);
+
+    // Join individual user room for direct notifications
+    socket.join(`user:${user.userId}`);
 
     /**
      * ============================================================
@@ -360,4 +370,56 @@ export const emitSatisfied = (patientId: string, commandId: string) => {
   });
 
   console.log(`✅ Satisfied event emitted to ${room}`);
+};
+
+/**
+ * Real-time event when a Patient and Non-Patient connect or update their pairing.
+ */
+export const emitConnectionUpdated = (
+  patientId: string,
+  nonPatientId: string,
+  payload?: Record<string, any>,
+) => {
+  if (!io) {
+    console.warn("Socket.io is not initialized");
+    return;
+  }
+
+  const patientRoom = getPatientRoom(patientId);
+  const userPatientRoom = `user:${patientId}`;
+  const userNonPatientRoom = `user:${nonPatientId}`;
+
+  // Automatically join all existing sockets of nonPatientId into patientRoom
+  try {
+    io.in(userNonPatientRoom).socketsJoin(patientRoom);
+    console.log(`👨‍⚕️ Sockets in ${userNonPatientRoom} joined ${patientRoom}`);
+  } catch (err) {
+    console.error("Failed to socketsJoin:", err);
+  }
+
+  const eventPayload = {
+    patientId,
+    nonPatientId,
+    status: "CONNECTED",
+    timestamp: new Date().toISOString(),
+    ...(payload || {}),
+  };
+
+  // Broadcast to patient room, patient personal user room, and caregiver personal user room
+  io.to(patientRoom).emit("connectionUpdated", eventPayload);
+  io.to(userPatientRoom).emit("connectionUpdated", eventPayload);
+  io.to(userNonPatientRoom).emit("connectionUpdated", eventPayload);
+
+  // Also emit patientConnectionStatus to nonpatient room
+  const presence = patientPresence.get(patientId);
+  const isOnline = presence?.isOnline ?? true;
+  io.to(userNonPatientRoom).emit("patientConnectionStatus", {
+    patientId,
+    status: isOnline ? "CONNECTED" : "DISCONNECTED",
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(
+    `🔗 Connection updated event emitted for patient ${patientId} and caregiver ${nonPatientId}`,
+  );
 };

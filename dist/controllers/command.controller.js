@@ -1,5 +1,5 @@
-import { GetAllCommandService, GetLatestCommandService, GetRecentCommandService, } from "@/services/command";
-import { parsePagination } from "@/utils/pagination";
+import { GetAllCommandService, GetLatestCommandService, GetRecentCommandService, } from "../services/command/index.js";
+import { parsePagination } from "../utils/pagination.js";
 export class CommandController {
     getAllCommandHistory = async (req, res) => {
         if (!req?.user?.id)

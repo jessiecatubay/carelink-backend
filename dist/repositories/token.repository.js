@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { TokenType } from "@/generated/prisma/enums";
+import { prisma } from "../lib/prisma.js";
+import { TokenType } from "../generated/prisma/enums.js";
 export class TokenRepository {
     async createEmailVerificationToken(params) {
         const { userId, token, expiresAt } = params;
@@ -64,6 +64,67 @@ export class TokenRepository {
         return prisma.token.update({
             where: { id },
             data: { revokedAt: new Date() },
+        });
+    }
+    async createPasswordResetToken(params) {
+        const { userId, token, expiresAt } = params;
+        return prisma.token.create({
+            data: {
+                userId,
+                token,
+                expiresAt,
+                type: TokenType.PASSWORD_RESET,
+            },
+        });
+    }
+    async revokeActivePasswordResetTokens(userId) {
+        return prisma.token.updateMany({
+            where: {
+                userId,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+            },
+            data: {
+                revokedAt: new Date(),
+            },
+        });
+    }
+    async findActivePasswordResetToken(token) {
+        return prisma.token.findFirst({
+            where: {
+                token,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+                expiresAt: {
+                    gt: new Date(),
+                },
+            },
+        });
+    }
+    async createPasswordResetAuthorizationToken(params) {
+        const { userId, token, expiresAt } = params;
+        return prisma.token.create({
+            data: {
+                userId,
+                token,
+                expiresAt,
+                type: TokenType.PASSWORD_RESET,
+            },
+        });
+    }
+    async findActivePasswordResetAuthorizationToken(token) {
+        return prisma.token.findFirst({
+            where: {
+                token,
+                type: TokenType.PASSWORD_RESET,
+                consumedAt: null,
+                revokedAt: null,
+                expiresAt: {
+                    gt: new Date(),
+                },
+            },
         });
     }
 }

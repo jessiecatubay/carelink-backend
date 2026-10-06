@@ -1,4 +1,4 @@
-import { paginationSchema, requestSchema } from "@/schemas/common.schema";
+import { paginationSchema, requestSchema } from "./common.schema.js";
 import { z } from "zod";
 export const commandQuerySchema = z.object({
     body: z.record(z.string(), z.unknown()).default({}),

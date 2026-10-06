@@ -6,16 +6,19 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "node --import tsx --test test/**/*.test.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias && node scripts/fix-esm-imports.cjs",
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "users": "tsx scripts/manage-users.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@firebase/util": "^1.15.3",
     "@google/genai": "^2.23.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.8.0",
@@ -43,6 +46,7 @@
     "@types/pg": "^8.20.0",
     "prisma": "^7.8.0",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.9.7",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"

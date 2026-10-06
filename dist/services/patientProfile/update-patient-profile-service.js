@@ -1,4 +1,4 @@
-import { PatientProfileRepository } from "@/repositories/patient-profile.repository";
+import { PatientProfileRepository } from "../../repositories/patient-profile.repository.js";
 export async function UpdatePatientProfileService(id, data) {
     const patienProfileRepository = new PatientProfileRepository();
     try {

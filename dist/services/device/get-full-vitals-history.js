@@ -1,4 +1,4 @@
-import { VitalsRepository } from "@/repositories/vitals-history.repository";
+import { VitalsRepository } from "../../repositories/vitals-history.repository.js";
 export async function GetVitalsHistoryService(nonPatientId, pagination) {
     const vitalsRepository = new VitalsRepository();
     try {

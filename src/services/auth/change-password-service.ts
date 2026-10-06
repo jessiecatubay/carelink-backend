@@ -7,18 +7,30 @@ export async function ChangePasswordService (id: string, newPassword: string, cu
 
   const user = await userRepository.getById(id);
 
-  if(!user?.password) return {
-    code: 500,
-    status: "error",
-    message: "No user"
+  if (user?.googleId && !user?.password) {
+    return {
+      code: 400,
+      status: "error",
+      message: "Accounts signed in with Google cannot change their password. Please manage your password through your Google account.",
+    };
   }
 
-  const isValid = verifyPassword(currentPassword, user?.password);
+  if (!user || !user.password) {
+    return {
+      code: 400,
+      status: "error",
+      message: "Unable to find user account or password not configured.",
+    };
+  }
 
-  if(!isValid) return {
-    code: 500,
-    status: "error",
-    message: "Current password doesnt match with stored password"
+  const isValid = verifyPassword(currentPassword, user.password);
+
+  if (!isValid) {
+    return {
+      code: 400,
+      status: "error",
+      message: "Current password does not match your current password.",
+    };
   }
 
   const hashedNewPass = hashPassword(newPassword);

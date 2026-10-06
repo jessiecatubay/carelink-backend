@@ -52,6 +52,8 @@ export async function LoginService(input: LoginInput) {
           role: user.role,
           onBoarded: user.onBoarded,
           emergencyContact: user.nonPatientProfile?.emergencyContact,
+          googleId: user.googleId,
+          hasPassword: Boolean(user.password),
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

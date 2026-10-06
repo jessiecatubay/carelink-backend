@@ -1,4 +1,4 @@
-import { CommandRepository } from "@/repositories/command.repository";
+import { CommandRepository } from "../../repositories/command.repository.js";
 export async function GetRecentCommandService(nonPatientId, patientId) {
     const commandRepository = new CommandRepository();
     try {

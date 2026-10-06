@@ -27,4 +27,9 @@ export const Command = {
     WATER: 'WATER',
     EMERGENCY: 'EMERGENCY'
 };
+export const PillReminderStatus = {
+    PENDING: 'PENDING',
+    SENT: 'SENT',
+    CANCELLED: 'CANCELLED'
+};
 //# sourceMappingURL=enums.js.map

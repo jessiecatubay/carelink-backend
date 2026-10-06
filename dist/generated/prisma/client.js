@@ -11,10 +11,10 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 globalThis['__dirname'] = path.dirname(fileURLToPath(import.meta.url));
-import * as $Class from "./internal/class";
-import * as Prisma from "./internal/prismaNamespace";
-export * as $Enums from './enums';
-export * from "./enums";
+import * as $Class from "./internal/class.js";
+import * as Prisma from "./internal/prismaNamespace.js";
+export * as $Enums from './enums.js';
+export * from "./enums.js";
 /**
  * ## Prisma Client
  *
@@ -24,8 +24,8 @@ export * from "./enums";
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more Tokens
- * const tokens = await prisma.token.findMany()
+ * // Fetch zero or more PushTokens
+ * const pushTokens = await prisma.pushToken.findMany()
  * ```
  *
  * Read more in our [docs](https://pris.ly/d/client).
