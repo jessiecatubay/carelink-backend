@@ -1,4 +1,4 @@
-import { commandValueSchema } from "@/schemas/device.schema";
+import { commandValueSchema } from "../schemas/device.schema.js";
 import mqtt from "mqtt";
 // =====================================================
 // MQTT CONFIGURATION

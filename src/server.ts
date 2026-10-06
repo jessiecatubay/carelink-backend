@@ -1,15 +1,15 @@
-import app from "./app";
+import app from "./app.js";
 import { createServer } from "http";
 import { initSocket } from "@/lib/socket";
 
 import "./services/mqtt.service";
 
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT) || 8000;
 
 const httpServer = createServer(app);
 
 initSocket(httpServer);
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

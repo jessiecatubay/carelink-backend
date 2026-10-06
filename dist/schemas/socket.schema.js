@@ -1,4 +1,4 @@
-import { commandValueSchema } from "@/schemas/device.schema";
+import { commandValueSchema } from "./device.schema.js";
 import { z } from "zod";
 const timestampSchema = z.string().datetime({ offset: true });
 export const patientVitalsEventSchema = z

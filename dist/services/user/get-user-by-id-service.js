@@ -1,4 +1,4 @@
-import { UserRepository } from "@/repositories/user.repository";
+import { UserRepository } from "../../repositories/user.repository.js";
 export async function GetUserByIdService(id) {
     const userRepository = new UserRepository();
     try {

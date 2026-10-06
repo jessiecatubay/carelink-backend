@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
-import { prisma } from "@/lib/prisma";
-import { patientAlertEventSchema, patientVitalsEventSchema, } from "@/schemas/socket.schema";
-import { verifyAccessToken } from "@/utils/jwt";
+import { prisma } from "./prisma.js";
+import { patientAlertEventSchema, patientVitalsEventSchema, } from "../schemas/socket.schema.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 import { z } from "zod";
 let io = null;
 const jwtPayloadSchema = z.object({

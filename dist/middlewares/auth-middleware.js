@@ -4,7 +4,7 @@
   2. If the token is valid, attach its payload to `req.user` and continue.
   3. If it is missing or invalid, respond with 401 so the client can initiate a refresh using the dedicated endpoint.
 */
-import { verifyAccessToken } from "@/utils/jwt";
+import { verifyAccessToken } from "../utils/jwt.js";
 export class AuthMiddleware {
     execute = async (req, res, next) => {
         const authReq = req;

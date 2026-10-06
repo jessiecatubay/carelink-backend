@@ -1,9 +1,9 @@
-import { Role } from "@/generated/prisma/client";
-import { TokenType } from "@/generated/prisma/enums";
-import { prisma } from "@/lib/prisma";
-import { generateCode } from "@/utils/generateConnectionCode";
-import { generateTokens } from "@/utils/jwt";
-import { capitalizeWords } from "@/utils/string";
+import { Role } from "../../generated/prisma/client.js";
+import { TokenType } from "../../generated/prisma/enums.js";
+import { prisma } from "../../lib/prisma.js";
+import { generateCode } from "../../utils/generateConnectionCode.js";
+import { generateTokens } from "../../utils/jwt.js";
+import { capitalizeWords } from "../../utils/string.js";
 export async function UserOnboardingService(userId, role, data) {
     try {
         const rawRole = typeof role === "string" ? role.replace("-", "_").toUpperCase() : role;

@@ -1,4 +1,4 @@
-import { DeviceController } from "@/controllers/device.controller";
+import { DeviceController } from "../controllers/device.controller.js";
 import { Router } from "express";
 const router = Router();
 const deviceController = new DeviceController();

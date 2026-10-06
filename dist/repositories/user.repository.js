@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma";
-import { capitalizeWords } from "@/utils/string";
+import { prisma } from "../lib/prisma.js";
+import { capitalizeWords } from "../utils/string.js";
 export class UserRepository {
     async getById(id) {
         const user = await prisma.user.findUnique({

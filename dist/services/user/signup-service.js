@@ -1,7 +1,7 @@
-import { UserRepository } from "@/repositories/user.repository";
-import { hashPassword } from "@/utils/password";
-import { capitalizeWords } from "@/utils/string";
-import { CreateEmailVerificationService } from "@/services/auth/verify-email-service";
+import { UserRepository } from "../../repositories/user.repository.js";
+import { hashPassword } from "../../utils/password.js";
+import { capitalizeWords } from "../../utils/string.js";
+import { CreateEmailVerificationService } from "../auth/verify-email-service.js";
 export async function SignupService(firstName, lastName, email, password) {
     const userRepository = new UserRepository();
     try {

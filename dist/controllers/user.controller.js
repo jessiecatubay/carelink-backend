@@ -1,8 +1,8 @@
-import { SignupService, LoginService, UpdateUserService, GetUserByIdService, GoogleAuthService, } from "@/services/user";
-import { UserOnboardingService } from "@/services/user/user-onboarding-service";
-import { RefreshTokenService, ChangePasswordService, ForgotPasswordService, ResetPasswordService, VerifyResetCodeService, } from "@/services/auth";
-import { GetMeService } from "@/services/auth/get-me-service";
-import { VerifyEmailService, ResendEmailVerificationService, } from "@/services/auth";
+import { SignupService, LoginService, UpdateUserService, GetUserByIdService, GoogleAuthService, } from "../services/user/index.js";
+import { UserOnboardingService } from "../services/user/user-onboarding-service.js";
+import { RefreshTokenService, ChangePasswordService, ForgotPasswordService, ResetPasswordService, VerifyResetCodeService, } from "../services/auth/index.js";
+import { GetMeService } from "../services/auth/get-me-service.js";
+import { VerifyEmailService, ResendEmailVerificationService, } from "../services/auth/index.js";
 export class UserController {
     getById = async (req, res) => {
         const { id } = req.body;

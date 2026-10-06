@@ -1,4 +1,4 @@
-import { ConnectPatientNonpatientService, FindConnectedCaregiversService, FindConnectedNonpatientService, FindConnectedPatientService, PreviewPatientByCodeService, UpdatePatientNonpatientService, } from "@/services/patientNonpatient";
+import { ConnectPatientNonpatientService, FindConnectedCaregiversService, FindConnectedNonpatientService, FindConnectedPatientService, PreviewPatientByCodeService, UpdatePatientNonpatientService, } from "../services/patientNonpatient/index.js";
 export class PatientNonpatientController {
     previewPatient = async (req, res) => {
         const { connectionCode } = req.body;

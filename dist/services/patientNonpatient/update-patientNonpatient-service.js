@@ -1,6 +1,6 @@
-import { emitConnectionUpdated } from "@/lib/socket";
-import { prisma } from "@/lib/prisma";
-import { PatientNonpatientRepository } from "@/repositories/patient-nonpatient-repository";
+import { emitConnectionUpdated } from "../../lib/socket.js";
+import { prisma } from "../../lib/prisma.js";
+import { PatientNonpatientRepository } from "../../repositories/patient-nonpatient-repository.js";
 export async function UpdatePatientNonpatientService(patientId, nonPatientId, data) {
     const patientNonpatientRepository = new PatientNonpatientRepository();
     if (!patientId || !nonPatientId || !data) {

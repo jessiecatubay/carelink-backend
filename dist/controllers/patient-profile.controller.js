@@ -1,5 +1,5 @@
-import { GenerateConnectionCodeService, UpdatePatientProfileService } from "@/services/patientProfile";
-import { RegisterDeviceOwnedService } from "@/services/patientProfile";
+import { GenerateConnectionCodeService, UpdatePatientProfileService } from "../services/patientProfile/index.js";
+import { RegisterDeviceOwnedService } from "../services/patientProfile/index.js";
 export class UpdatePatientProfileController {
     update = async (req, res) => {
         const { patientId, ...data } = req.body;

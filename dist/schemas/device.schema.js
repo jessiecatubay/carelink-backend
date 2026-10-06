@@ -1,4 +1,4 @@
-import { requestSchema, uuidSchema } from "@/schemas/common.schema";
+import { requestSchema, uuidSchema } from "./common.schema.js";
 import { z } from "zod";
 export const commandValueSchema = z.enum([
     "FOOD",

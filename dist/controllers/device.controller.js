@@ -1,10 +1,10 @@
-import { emitPatientAlert, emitPatientVitals, emitSatisfied, } from "@/lib/socket";
-import { CreateCommandService, UpdateLatestCommandService, } from "@/services/command";
-import { CreateVitalsHistoryService, GetRecentVitalsHistoryService, GetVitalsHistoryService, } from "@/services/device";
-import { SendDeviceCommand } from "@/services/mqtt.service";
-import { parsePagination } from "@/utils/pagination";
-import { sendPatientCaregiversNotification } from "../services/notification.service";
-import { GetUserByDeviceService } from "@/services/patientProfile";
+import { emitPatientAlert, emitPatientVitals, emitSatisfied, } from "../lib/socket.js";
+import { CreateCommandService, UpdateLatestCommandService, } from "../services/command/index.js";
+import { CreateVitalsHistoryService, GetRecentVitalsHistoryService, GetVitalsHistoryService, } from "../services/device/index.js";
+import { SendDeviceCommand } from "../services/mqtt.service.js";
+import { parsePagination } from "../utils/pagination.js";
+import { sendPatientCaregiversNotification } from "../services/notification.service.js";
+import { GetUserByDeviceService } from "../services/patientProfile/index.js";
 export class DeviceController {
     patientVitals = async (req, res) => {
         try {
