@@ -3,14 +3,24 @@ import { getAuth } from "firebase-admin/auth";
 import fs from "fs";
 import path from "path";
 
-const serviceAccountPath = path.join(
-    process.cwd(),
-    "firebase-service-account.json"
-);
+let serviceAccount: any;
 
-const serviceAccount = JSON.parse(
-    fs.readFileSync(serviceAccountPath, "utf-8")
-);
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // Render / production
+    serviceAccount = JSON.parse(
+        process.env.FIREBASE_SERVICE_ACCOUNT
+    );
+} else {
+    // Local development
+    const serviceAccountPath = path.join(
+        process.cwd(),
+        "firebase-service-account.json"
+    );
+
+    serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, "utf-8")
+    );
+}
 
 const firebaseApp =
     getApps().length === 0
