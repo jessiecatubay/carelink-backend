@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma.js";
 export class PatientNonpatientRepository {
     async create(data) {
         return await prisma.patientNonPatient.create({ data });

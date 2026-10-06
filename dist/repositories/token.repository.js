@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { TokenType } from "@/generated/prisma/enums";
+import { prisma } from "../lib/prisma.js";
+import { TokenType } from "../generated/prisma/enums.js";
 export class TokenRepository {
     async createEmailVerificationToken(params) {
         const { userId, token, expiresAt } = params;

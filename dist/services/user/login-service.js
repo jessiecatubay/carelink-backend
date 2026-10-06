@@ -1,7 +1,7 @@
-import { UserRepository } from "@/repositories/user.repository";
-import { generateTokens } from "@/utils/jwt";
-import { verifyPassword } from "@/utils/password";
-import { TokenRepository } from "@/repositories/token.repository";
+import { UserRepository } from "../../repositories/user.repository.js";
+import { generateTokens } from "../../utils/jwt.js";
+import { verifyPassword } from "../../utils/password.js";
+import { TokenRepository } from "../../repositories/token.repository.js";
 export async function LoginService(input) {
     const userRepository = new UserRepository();
     try {

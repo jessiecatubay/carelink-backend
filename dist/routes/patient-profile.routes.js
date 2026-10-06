@@ -1,5 +1,5 @@
-import { UpdatePatientProfileController } from "@/controllers/patient-profile.controller";
-import { authenticateToken } from "@/middlewares/authenticate-token";
+import { UpdatePatientProfileController } from "../controllers/patient-profile.controller.js";
+import { authenticateToken } from "../middlewares/authenticate-token.js";
 import { Router } from "express";
 const router = Router();
 const updatePatientProfileController = new UpdatePatientProfileController();

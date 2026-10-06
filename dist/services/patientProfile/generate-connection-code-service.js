@@ -1,5 +1,5 @@
-import { PatientProfileRepository } from "@/repositories/patient-profile.repository";
-import { generateCode } from "@/utils/generateConnectionCode";
+import { PatientProfileRepository } from "../../repositories/patient-profile.repository.js";
+import { generateCode } from "../../utils/generateConnectionCode.js";
 export async function GenerateConnectionCodeService(id) {
     const patientProfileRepository = new PatientProfileRepository();
     try {

@@ -1,5 +1,5 @@
-import { CommandController } from "@/controllers/command.controller";
-import { authenticateToken } from "@/middlewares/authenticate-token";
+import { CommandController } from "../controllers/command.controller.js";
+import { authenticateToken } from "../middlewares/authenticate-token.js";
 import { Router } from "express";
 const router = Router();
 const commandController = new CommandController();

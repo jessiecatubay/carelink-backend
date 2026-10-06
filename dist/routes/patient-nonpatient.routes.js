@@ -1,4 +1,4 @@
-import { PatientNonpatientController } from "@/controllers/patient-nonpatient.controller";
+import { PatientNonpatientController } from "../controllers/patient-nonpatient.controller.js";
 import { Router } from "express";
 const router = Router();
 const patientNonpatientController = new PatientNonpatientController();

@@ -1,4 +1,4 @@
-import { VitalsRepository } from "@/repositories/vitals-history.repository";
+import { VitalsRepository } from "../../repositories/vitals-history.repository.js";
 export async function CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage) {
     const vitalsRespository = new VitalsRepository();
     try {

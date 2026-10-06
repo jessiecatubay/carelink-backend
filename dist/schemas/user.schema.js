@@ -1,4 +1,4 @@
-import { requestSchema, uuidSchema } from "@/schemas/common.schema";
+import { requestSchema, uuidSchema } from "./common.schema.js";
 import { z } from "zod";
 const roleSchema = z.enum(["PATIENT", "NON_PATIENT", "USER"]);
 export const signupSchema = requestSchema(z

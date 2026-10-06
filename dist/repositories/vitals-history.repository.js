@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../lib/prisma.js";
 export class VitalsRepository {
     database;
     constructor(database = prisma) {
