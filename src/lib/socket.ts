@@ -89,7 +89,7 @@ export const initSocket = (server: HttpServer) => {
   /**
    * Authenticate every socket connection
    */
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
 
@@ -105,9 +105,16 @@ export const initSocket = (server: HttpServer) => {
         return next(new Error("Invalid authentication token"));
       }
 
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+
+      const role = dbUser?.role ?? decoded.role ?? "USER";
+
       socket.data.user = {
         userId,
-        role: decoded.role ?? "USER",
+        role,
       } satisfies SocketUser;
 
       next();
