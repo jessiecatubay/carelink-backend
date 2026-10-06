@@ -172,6 +172,8 @@ export const VitalReadingsScalarFieldEnum = {
     deviceId: 'deviceId',
     temperature: 'temperature',
     heartRate: 'heartRate',
+    batteryLevel: 'batteryLevel',
+    batteryVoltage: 'batteryVoltage',
     recordedAt: 'recordedAt',
     sensorContact: 'sensorContact'
 };

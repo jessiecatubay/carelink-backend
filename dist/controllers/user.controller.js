@@ -40,15 +40,23 @@ export class UserController {
         return res.status(result.code).json(result);
     };
     onBoarded = async (req, res) => {
-        const { userId, role, ...data } = req.body;
-        if (role === "NON-PATIENT") {
-            const nonPatientRole = "NON_PATIENT";
-            const result = await UserOnboardingService(userId, nonPatientRole, data);
-            return res.status(result.code).json(result);
+        const userId = req.body?.userId || req.user?.id;
+        const { role, ...data } = req.body;
+        if (!userId) {
+            return res.status(400).json({
+                code: 400,
+                status: "error",
+                message: "User ID is required.",
+            });
         }
-        console.log("User onboarding", req.body);
-        const roleUpper = typeof role === "string" ? role.toUpperCase() : role;
-        const result = await UserOnboardingService(userId, roleUpper, data);
+        if (!role) {
+            return res.status(400).json({
+                code: 400,
+                status: "error",
+                message: "Role is required.",
+            });
+        }
+        const result = await UserOnboardingService(userId, role, data);
         return res.status(result.code).json(result);
     };
     me = async (req, res) => {

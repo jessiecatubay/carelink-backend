@@ -176,7 +176,7 @@ model VitalReadings {
   temperature         Float
   heartRate           Int
   batteryLevel        Int
-  batteryLevelVoltage Float
+  batteryVoltage      Float
   recordedAt          DateTime @default(now())
   sensorContact       Boolean
 
