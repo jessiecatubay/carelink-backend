@@ -12,6 +12,10 @@ export interface UserData {
   emergencyContact?: string;
   emergencyContactName?: string;
   relationship?: string;
+  age?: number | string | null;
+  gender?: string | null;
+  medicalConditions?: string | null;
+  notes?: string | null;
 }
 
 export interface LoginInput {

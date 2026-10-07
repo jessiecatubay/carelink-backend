@@ -1,14 +1,15 @@
 import { PatientNonpatientController } from "@/controllers/patient-nonpatient.controller";
+import { authenticateToken } from "@/middlewares/authenticate-token";
 import { Router } from "express";
 
 const router = Router();
 const patientNonpatientController = new PatientNonpatientController();
 
-// router.use(authenticateToken);
+// Protect all patient-nonpatient connection routes
+router.use(authenticateToken);
 
 router.post(
   "/v1/connected-nonpatients",
-  // validateSchema(connectedNonpatientsSchema),
   patientNonpatientController.findConnectedNonPatient,
 );
 
@@ -24,13 +25,11 @@ router.post(
 
 router.post(
   "/v1/connect",
-  // validateSchema(connectSchema),
   patientNonpatientController.connect,
 );
 
 router.post(
   "/v1/update",
-  // validateSchema(updateConnectionSchema),
   patientNonpatientController.update,
 );
 

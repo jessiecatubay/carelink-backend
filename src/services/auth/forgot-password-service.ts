@@ -26,9 +26,9 @@ export async function ForgotPasswordService(email: string) {
     // whether an account exists for this email.
     if (!user) {
       return {
-        code: 404,
-        status: "error",
-        message: "User not found",
+        code: 200,
+        status: "success",
+        message: "If the email exists, a password reset code has been sent.",
       };
     }
 
