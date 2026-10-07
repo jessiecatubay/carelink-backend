@@ -125,6 +125,7 @@ export async function sendUserPushNotification(
 export async function sendPatientCaregiversNotification(
   patientId: string,
   notification: CareLinkNotification,
+  additionalUserIds: string[] = [],
 ) {
   console.log("=================================");
   console.log("PATIENT CAREGIVER NOTIFICATION");
@@ -143,21 +144,28 @@ export async function sendPatientCaregiversNotification(
 
   console.log("Connected caregivers:", connections);
 
-  const nonPatientIds = connections.map(
-    (connection) => connection.nonPatientId,
+  const nonPatientIdSet = new Set<string>(
+    connections.map((connection) => connection.nonPatientId),
   );
 
-  console.log("Non-patient IDs:", nonPatientIds);
+  for (const uid of additionalUserIds) {
+    if (uid && typeof uid === "string") {
+      nonPatientIdSet.add(uid);
+    }
+  }
 
-  if (nonPatientIds.length === 0) {
-    console.log("No connected non-patients found.");
+  const targetUserIds = Array.from(nonPatientIdSet);
+  console.log("Target non-patient IDs:", targetUserIds);
+
+  if (targetUserIds.length === 0) {
+    console.log("No connected non-patients or target caregivers found.");
     return;
   }
 
   const pushTokens = await prisma.pushToken.findMany({
     where: {
       userId: {
-        in: nonPatientIds,
+        in: targetUserIds,
       },
     },
     select: {
@@ -167,11 +175,13 @@ export async function sendPatientCaregiversNotification(
 
   console.log("Caregiver push tokens:", pushTokens);
 
-  const tokens = pushTokens.map((item) => item.token);
+  const uniqueTokens = Array.from(
+    new Set(pushTokens.map((item) => item.token).filter(Boolean)),
+  );
 
-  console.log("Caregiver token strings:", tokens);
+  console.log("Caregiver unique token strings:", uniqueTokens);
 
-  await sendPushNotification(tokens, notification);
+  await sendPushNotification(uniqueTokens, notification);
 
   console.log("=================================");
 }
