@@ -7,6 +7,7 @@ import patientNonpatientRoutes from "./patient-nonpatient.routes.js";
 import notificationRoutes from "./notification.routes.js";
 import aiRoutes from "./ai.routes.js";
 import emergencyContact from "./emergency-contact.routes.js";
+import pillReminderRoutes from "./pill-reminder.routes.js";
 const router = Router();
 router.use("/user", userRoutes);
 router.use("/device", deviceRoutes);
@@ -16,5 +17,6 @@ router.use("/patient-nonpatient", patientNonpatientRoutes);
 router.use("/notification", notificationRoutes);
 router.use("/ai", aiRoutes);
 router.use("/emergency-contact", emergencyContact);
+router.use("/pill-reminders", pillReminderRoutes);
 export default router;
 //# sourceMappingURL=index.js.map

@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { RefreshTokenService } from "../services/auth/index.js";
 const JWT_SECRET = process.env.JWT_SECRET || "access-secret";
 export function generateTokens(user) {
-    const accessToken = jwt.sign({ id: user.id, email: user.email, role: user.role ?? "PATIENT" }, JWT_SECRET, { expiresIn: "15s" });
+    const accessToken = jwt.sign({ id: user.id, email: user.email, role: user.role ?? "PATIENT" }, JWT_SECRET, { expiresIn: "7d" });
     const refreshToken = jwt.sign({ id: user.id, email: user.email, role: user.role ?? "PATIENT" }, JWT_SECRET, { expiresIn: "7d" });
     return { accessToken, refreshToken };
 }
