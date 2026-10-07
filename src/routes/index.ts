@@ -1,5 +1,5 @@
 import { Router } from "express";
-import userRoutes from "./user.routes"
+import userRoutes from "./user.routes";
 import deviceRoutes from "./device.routes";
 import commandRoutes from "./command.routes";
 import patientProfileRoutes from "./patient-profile.routes";
@@ -7,6 +7,7 @@ import patientNonpatientRoutes from "./patient-nonpatient.routes";
 import notificationRoutes from "./notification.routes";
 import aiRoutes from "./ai.routes";
 import emergencyContact from "./emergency-contact.routes";
+import pillReminderRoutes from "./pill-reminder.routes";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use("/patient-profile", patientProfileRoutes);
 router.use("/patient-nonpatient", patientNonpatientRoutes);
 router.use("/notification", notificationRoutes);
 router.use("/ai", aiRoutes);
-router.use("/emergency-contact", emergencyContact)
+router.use("/emergency-contact", emergencyContact);
+router.use("/pill-reminders", pillReminderRoutes);
 
-export default router
+export default router;

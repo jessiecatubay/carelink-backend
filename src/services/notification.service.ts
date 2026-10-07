@@ -7,13 +7,14 @@ import { expo } from "../lib/expo";
 export type CareLinkNotification = {
   title: string;
   body: string;
+  channelId?: string;
   data?: Record<string, unknown>;
 };
 
 export async function savePushToken(
   userId: string,
   token: string,
-  platform?: string
+  platform?: string,
 ) {
   if (!Expo.isExpoPushToken(token)) {
     throw new Error("Invalid Expo push token");
@@ -44,22 +45,20 @@ export async function savePushToken(
 
 export async function sendPushNotification(
   tokens: string[],
-  notification: CareLinkNotification
-) {
+  notification: CareLinkNotification,
+): Promise<boolean> {
   console.log("=================================");
   console.log("SEND PUSH NOTIFICATION");
   console.log("Tokens received:", tokens);
   console.log("Notification:", notification);
 
-  const validTokens = tokens.filter((token) =>
-    Expo.isExpoPushToken(token)
-  );
+  const validTokens = tokens.filter((token) => Expo.isExpoPushToken(token));
 
   console.log("Valid Expo tokens:", validTokens);
 
   if (validTokens.length === 0) {
     console.log("No valid Expo push tokens found.");
-    return;
+    return false;
   }
 
   const messages = validTokens.map((token) => ({
@@ -68,11 +67,13 @@ export async function sendPushNotification(
     title: notification.title,
     body: notification.body,
     data: notification.data ?? {},
+    ...(notification.channelId ? { channelId: notification.channelId } : {}),
   }));
 
   console.log("Messages being sent:", messages);
 
   const chunks = expo.chunkPushNotifications(messages);
+  let accepted = true;
 
   for (const chunk of chunks) {
     try {
@@ -81,18 +82,23 @@ export async function sendPushNotification(
       const tickets = await expo.sendPushNotificationsAsync(chunk);
 
       console.log("Expo push tickets:", tickets);
+      if (tickets.some((ticket) => ticket.status !== "ok")) {
+        accepted = false;
+      }
     } catch (error) {
       console.error("Expo push notification error:", error);
+      accepted = false;
     }
   }
 
   console.log("=================================");
+  return accepted;
 }
 
 export async function sendUserPushNotification(
   userId: string,
-  notification: CareLinkNotification
-) {
+  notification: CareLinkNotification,
+): Promise<boolean> {
   console.log("Sending push notification to user:", userId);
 
   const pushTokens = await prisma.pushToken.findMany({
@@ -104,17 +110,21 @@ export async function sendUserPushNotification(
     },
   });
 
+  if (pushTokens.length === 0) {
+    return false;
+  }
+
   console.log("User push tokens:", pushTokens);
 
-  await sendPushNotification(
+  return sendPushNotification(
     pushTokens.map((item) => item.token),
-    notification
+    notification,
   );
 }
 
 export async function sendPatientCaregiversNotification(
   patientId: string,
-  notification: CareLinkNotification
+  notification: CareLinkNotification,
 ) {
   console.log("=================================");
   console.log("PATIENT CAREGIVER NOTIFICATION");
@@ -134,7 +144,7 @@ export async function sendPatientCaregiversNotification(
   console.log("Connected caregivers:", connections);
 
   const nonPatientIds = connections.map(
-    (connection) => connection.nonPatientId
+    (connection) => connection.nonPatientId,
   );
 
   console.log("Non-patient IDs:", nonPatientIds);

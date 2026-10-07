@@ -100,6 +100,7 @@ export const PillReminderScalarFieldEnum = {
     patientId: 'patientId',
     createdById: 'createdById',
     title: 'title',
+    description: 'description',
     scheduledAt: 'scheduledAt',
     status: 'status',
     createdAt: 'createdAt',
