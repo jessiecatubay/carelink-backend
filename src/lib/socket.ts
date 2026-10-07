@@ -423,3 +423,39 @@ export const emitConnectionUpdated = (
     `🔗 Connection updated event emitted for patient ${patientId} and caregiver ${nonPatientId}`,
   );
 };
+
+/**
+ * Emit a pill reminder event directly to the patient's rooms.
+ */
+export const emitPillReminder = (
+  patientId: string,
+  payload: {
+    id: string;
+    title: string;
+    description: string | null;
+    scheduledAt: string;
+  },
+) => {
+  if (!io) {
+    console.warn("Socket.io is not initialized");
+    return;
+  }
+
+  const patientRoom = getPatientRoom(patientId);
+  const userRoom = `user:${patientId}`;
+
+  const eventPayload = {
+    type: "PILL_REMINDER",
+    reminderId: payload.id,
+    patientId,
+    title: payload.title,
+    description: payload.description,
+    scheduledAt: payload.scheduledAt,
+    timestamp: new Date().toISOString(),
+  };
+
+  io.to(patientRoom).emit("pillReminder", eventPayload);
+  io.to(userRoom).emit("pillReminder", eventPayload);
+
+  console.log(`💊 Pill reminder emitted to patient ${patientId}: ${payload.title}`);
+};
