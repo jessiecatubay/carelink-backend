@@ -54,15 +54,15 @@ export class UserController {
     return res.status(result.code).json(result);
   };
   public update = async (req: AuthenticatedRequest, res: Response) => {
-    const email = req.body?.email || req.user?.email;
+    const email = req.user?.email;
     const data = { ...req.body };
     delete data.email;
 
     if (!email) {
-      return res.status(400).json({
-        code: 400,
+      return res.status(401).json({
+        code: 401,
         status: "error",
-        message: "Email is required.",
+        message: "Unauthorized. User email is missing from session.",
       });
     }
 
@@ -72,7 +72,7 @@ export class UserController {
   };
 
   public onBoarded = async (req: Request, res: Response) => {
-    const userId = req.body?.userId || (req as any).user?.id;
+    const userId = (req as AuthenticatedRequest).user?.id || req.body?.userId;
     const { role, ...data } = req.body;
 
     if (!userId) {
@@ -126,10 +126,19 @@ export class UserController {
   };
 
   public changePassword = async (req: AuthenticatedRequest, res: Response) => {
-    const { id, newPassword, currentPassword } = req.body;
+    const userId = req.user?.id || req.body?.id;
+    const { newPassword, currentPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        message: "Unauthorized. User session missing.",
+      });
+    }
 
     const result = await ChangePasswordService(
-      id,
+      userId,
       newPassword,
       currentPassword,
     );

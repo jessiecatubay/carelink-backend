@@ -160,14 +160,28 @@ export class UserRepository {
     });
 
     if (userType?.role === "PATIENT") {
+      const parsedAge =
+        data.age !== undefined && data.age !== null && data.age !== ("" as any) && !isNaN(Number(data.age)) && Number(data.age) > 0
+          ? Number(data.age)
+          : undefined;
+
+      const profileUpdateData: any = {};
+      if (parsedAge !== undefined) profileUpdateData.age = parsedAge;
+      if (data.gender !== undefined) profileUpdateData.gender = data.gender ? capitalizeWords(data.gender) : null;
+      if (data.medicalConditions !== undefined) profileUpdateData.medicalConditions = data.medicalConditions || null;
+      if (data.notes !== undefined) profileUpdateData.notes = data.notes || null;
+
       await prisma.patientProfile.upsert({
         where: {
           userId: userType.id,
         },
-        update: data,
+        update: profileUpdateData,
         create: {
           userId: userType.id,
-          ...data,
+          age: parsedAge ?? null,
+          gender: data.gender ? capitalizeWords(data.gender) : null,
+          medicalConditions: data.medicalConditions || null,
+          notes: data.notes || null,
         },
       });
     } else if (userType?.role === "NON_PATIENT") {

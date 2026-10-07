@@ -53,7 +53,11 @@ export async function UserOnboardingService(
 
         const connectionCode = existingProfile?.connectionCode || generateCode();
         const parsedAge =
-          data.age !== undefined && data.age !== null && data.age !== ("" as any)
+          data.age !== undefined &&
+          data.age !== null &&
+          data.age !== ("" as any) &&
+          !isNaN(Number(data.age)) &&
+          Number(data.age) > 0
             ? Number(data.age)
             : undefined;
 
@@ -62,14 +66,14 @@ export async function UserOnboardingService(
             userId: user.id,
           },
           update: {
-            age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : undefined,
+            age: parsedAge !== undefined ? parsedAge : undefined,
             gender: data.gender ? capitalizeWords(data.gender) : data.gender,
             medicalConditions: data.medicalConditions,
             notes: data.notes,
             ...(!existingProfile?.connectionCode ? { connectionCode } : {}),
           },
           create: {
-            age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : null,
+            age: parsedAge !== undefined ? parsedAge : null,
             gender: data.gender ? capitalizeWords(data.gender) : null,
             medicalConditions: data.medicalConditions || null,
             notes: data.notes || null,

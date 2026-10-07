@@ -20,7 +20,7 @@ export function generateTokens(user: {
   const accessToken = jwt.sign(
     { id: user.id, email: user.email, role: user.role ?? "PATIENT" },
     JWT_SECRET,
-    { expiresIn: "15s" },
+    { expiresIn: "15m" },
   );
 
   const refreshToken = jwt.sign(
