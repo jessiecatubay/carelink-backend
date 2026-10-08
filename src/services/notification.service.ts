@@ -61,16 +61,47 @@ export async function sendPushNotification(
     return false;
   }
 
-  const messages = validTokens.map((token) => ({
-    to: token,
-    sound: "default",
-    title: notification.title,
-    body: notification.body,
-    data: notification.data ?? {},
-    ...(notification.channelId ? { channelId: notification.channelId } : {}),
-  }));
+  const isEmergency =
+    notification.channelId === "carelink-emergency-v2" ||
+    (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.alertType as string)?.toUpperCase() === "EMERGENCY" ||
+    notification.title.toLowerCase().includes("emergency");
 
-  console.log("Messages being sent:", messages);
+  const messages = validTokens.map((token) => {
+    if (isEmergency) {
+      // DATA-ONLY message for Critical Emergency alerts:
+      // Omit top-level title/body so Android OS/Play Services does not intercept it on fcm_fallback_notification_channel,
+      // allowing CareLinkFirebaseMessagingService to receive the message in closed/background state and trigger EmergencyAlertActivity.
+      return {
+        to: token,
+        priority: "high" as const,
+        channelId: "carelink-emergency-v2",
+        data: {
+          ...(notification.data ?? {}),
+          command: "EMERGENCY",
+          type: "EMERGENCY",
+          alertType: "EMERGENCY",
+          title: notification.title,
+          body: notification.body,
+          sound: "alert_sound.wav",
+        },
+      };
+    }
+
+    // Standard notification payload for all regular alerts (Food, Water, Assistance, Pill Reminder)
+    return {
+      to: token,
+      sound: "default" as const,
+      title: notification.title,
+      body: notification.body,
+      priority: "high" as const,
+      data: notification.data ?? {},
+      channelId: notification.channelId ?? "carelink-alerts",
+    };
+  });
+
+  console.log("Messages being sent (isEmergency=" + isEmergency + "):", messages);
 
   const chunks = expo.chunkPushNotifications(messages);
   let accepted = true;

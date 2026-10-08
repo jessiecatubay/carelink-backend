@@ -17,6 +17,7 @@ import { SendDeviceCommand } from "@/services/mqtt.service";
 import { DeviceData } from "@/types/user";
 import { parsePagination } from "@/utils/pagination";
 import { Request, Response } from "express";
+import { prisma } from "../lib/prisma";
 import { sendPatientCaregiversNotification } from "../services/notification.service";
 import { GetUserByDeviceService } from "@/services/patientProfile";
 
@@ -360,7 +361,7 @@ export class DeviceController {
     const rawConnected =
       req.body.connectedNonpatients;
 
-    const connectedNonpatients: string[] =
+    let connectedNonpatients: string[] =
       Array.isArray(rawConnected)
         ? rawConnected
             .map((item: any) =>
@@ -370,6 +371,23 @@ export class DeviceController {
             )
             .filter(Boolean)
         : [];
+
+    if (connectedNonpatients.length === 0 && patientId) {
+      try {
+        const connections = await prisma.patientNonPatient.findMany({
+          where: {
+            patientId,
+            status: "CONNECTED",
+          },
+          select: {
+            nonPatientId: true,
+          },
+        });
+        connectedNonpatients = connections.map((c) => c.nonPatientId);
+      } catch (e) {
+        console.warn("Could not load connected caregivers:", e);
+      }
+    }
 
     const result =
       SendDeviceCommand(
@@ -485,28 +503,55 @@ export class DeviceController {
       });
     }
 
+    // Fetch patient info for rich notification and alert modal
+    let patientName = "Connected Patient";
+    let patientPhone = "";
     try {
-      if (payload.length > 0) {
-        emitPatientAlert(
-          patientId,
-          payload[0],
-        );
-      } else {
-        emitPatientAlert(
-          patientId,
-          {
-            deviceId,
-            command:
-              normalizedCommand,
-            alertType:
-              normalizedCommand,
-            recordedAt:
-              new Date().toISOString(),
-            status: "Pending",
-            patientId,
+      const patientUser = await prisma.user.findUnique({
+        where: { id: patientId },
+        include: {
+          patientProfile: {
+            include: {
+              emergencyContacts: true,
+            },
           },
-        );
+          nonPatientProfile: true,
+        },
+      });
+
+      if (patientUser) {
+        const full = `${patientUser.firstName ?? ""} ${patientUser.lastName ?? ""}`.trim();
+        if (full) {
+          patientName = full;
+        }
+
+        const priorityContact =
+          patientUser.patientProfile?.emergencyContacts?.find((c) => c.isPriority) ??
+          patientUser.patientProfile?.emergencyContacts?.[0];
+
+        patientPhone =
+          priorityContact?.phoneNumber ??
+          patientUser.nonPatientProfile?.emergencyContact ??
+          "";
       }
+    } catch (e) {
+      console.warn("Could not load patient user details:", e);
+    }
+
+    try {
+      const socketPayload = {
+        id: createdCommands[0]?.data?.id,
+        deviceId,
+        command: normalizedCommand,
+        alertType: normalizedCommand,
+        patientId,
+        patientName,
+        phoneNumber: patientPhone,
+        recordedAt: new Date().toISOString(),
+        status: "Pending",
+      };
+
+      emitPatientAlert(patientId, socketPayload);
     } catch (error) {
       console.error(
         "Socket not initialized:",
@@ -515,41 +560,33 @@ export class DeviceController {
     }
 
     try {
-      let title =
-        "CareLink Alert";
+      let title = "CareLink Alert";
+      let body = `${patientName} sent a new alert.`;
+      let channelId = "carelink-alerts";
 
-      let body =
-        "The patient sent a new alert.";
-
-      switch (
-        normalizedCommand
-      ) {
+      switch (normalizedCommand) {
         case "FOOD":
-          title =
-            "Food Assistance";
-          body =
-            "The patient is requesting food.";
+          title = "🍱 Food Assistance";
+          body = `${patientName} is requesting food.`;
+          channelId = "carelink-alerts";
           break;
 
         case "WATER":
-          title =
-            "Water Assistance";
-          body =
-            "The patient is requesting water.";
+          title = "💧 Water Assistance";
+          body = `${patientName} is requesting water.`;
+          channelId = "carelink-alerts";
           break;
 
         case "ASSISTANCE":
-          title =
-            "Assistance Requested";
-          body =
-            "The patient is requesting assistance.";
+          title = "🙋 Assistance Requested";
+          body = `${patientName} is requesting assistance.`;
+          channelId = "carelink-alerts";
           break;
 
         case "EMERGENCY":
-          title =
-            "Emergency Alert";
-          body =
-            "The patient has triggered a critical emergency alert!";
+          title = "🚨 CARELINK EMERGENCY";
+          body = `${patientName} needs emergency assistance.\nPatient activated the Emergency button.`;
+          channelId = "carelink-emergency-v2";
           break;
       }
 
@@ -558,19 +595,25 @@ export class DeviceController {
         {
           title,
           body,
+          channelId,
           data: {
-            command:
-              normalizedCommand,
-            alertType:
-              normalizedCommand,
+            command: normalizedCommand,
+            alertType: normalizedCommand,
+            type: normalizedCommand,
             patientId,
+            patientName,
+            phoneNumber: patientPhone,
+            timestamp: new Date().toLocaleTimeString(),
           },
         },
+        connectedNonpatients,
       );
 
       console.log(
         "Sending push notification for patient:",
         patientId,
+        "Command:",
+        normalizedCommand,
       );
 
       console.log(
@@ -579,7 +622,6 @@ export class DeviceController {
       );
 
     } catch (error) {
-
       console.error(
         "Push notification error:",
         error,
@@ -592,7 +634,12 @@ export class DeviceController {
           200,
       )
       .json({
-        ...result,
+        success: true,
+        status: "success",
+        message:
+          normalizedCommand === "EMERGENCY"
+            ? "Emergency alert sent successfully to connected caregivers"
+            : "Command processed successfully",
         data: createdCommands,
       });
   };
