@@ -3,6 +3,7 @@ import { Expo } from "expo-server-sdk";
 import { prisma } from "../lib/prisma";
 
 import { expo } from "../lib/expo";
+import { firebaseAdminMessaging } from "../lib/firebaseAdmin";
 
 export type CareLinkNotification = {
   title: string;
@@ -16,13 +17,13 @@ export async function savePushToken(
   token: string,
   platform?: string,
 ) {
-  if (!Expo.isExpoPushToken(token)) {
+  if (platform !== "android-fcm" && !Expo.isExpoPushToken(token)) {
     throw new Error("Invalid Expo push token");
   }
 
   console.log("Saving push token:", {
     userId,
-    token,
+    token: token.substring(0, 15) + "...",
     platform,
   });
 
@@ -41,6 +42,66 @@ export async function savePushToken(
       platform,
     },
   });
+}
+
+export async function sendNativeFcmEmergencyNotification(
+  fcmTokens: string[],
+  notification: CareLinkNotification,
+): Promise<boolean> {
+  if (!firebaseAdminMessaging) {
+    console.warn("Firebase Admin Messaging is not initialized (check environment variables).");
+    return false;
+  }
+
+  if (fcmTokens.length === 0) {
+    return false;
+  }
+
+  console.log("=================================");
+  console.log("SEND NATIVE FCM EMERGENCY NOTIFICATION");
+  console.log("FCM tokens count:", fcmTokens.length);
+
+  // FCM data payload requires all string values
+  const stringData: Record<string, string> = {
+    command: "EMERGENCY",
+    type: "EMERGENCY",
+    alertType: "EMERGENCY",
+    title: String(notification.title || "EMERGENCY ALERT"),
+    body: String(notification.body || "Emergency assistance requested."),
+    sound: "alert_sound.wav",
+    channelId: "carelink-emergency-v2",
+    timestamp: new Date().toISOString(),
+  };
+
+  if (notification.data) {
+    for (const [key, value] of Object.entries(notification.data)) {
+      if (value !== undefined && value !== null) {
+        stringData[key] = typeof value === "string" ? value : JSON.stringify(value);
+      }
+    }
+  }
+
+  try {
+    // Pure DATA-ONLY message so Android OS does not post standard tray fallback
+    // and CareLinkFirebaseMessagingService.onMessageReceived() triggers EmergencyAlertActivity.
+    const response = await firebaseAdminMessaging.sendEachForMulticast({
+      tokens: fcmTokens,
+      data: stringData,
+      android: {
+        priority: "high",
+      },
+    });
+
+    console.log("Native FCM emergency response:", {
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    });
+
+    return response.successCount > 0;
+  } catch (error) {
+    console.error("Failed to send native FCM emergency message:", error);
+    return false;
+  }
 }
 
 export async function sendPushNotification(
@@ -70,9 +131,6 @@ export async function sendPushNotification(
 
   const messages = validTokens.map((token) => {
     if (isEmergency) {
-      // DATA-ONLY message for Critical Emergency alerts:
-      // Omit top-level title/body so Android OS/Play Services does not intercept it on fcm_fallback_notification_channel,
-      // allowing CareLinkFirebaseMessagingService to receive the message in closed/background state and trigger EmergencyAlertActivity.
       return {
         to: token,
         priority: "high" as const,
@@ -138,6 +196,7 @@ export async function sendUserPushNotification(
     },
     select: {
       token: true,
+      platform: true,
     },
   });
 
@@ -147,10 +206,29 @@ export async function sendUserPushNotification(
 
   console.log("User push tokens:", pushTokens);
 
-  return sendPushNotification(
-    pushTokens.map((item) => item.token),
-    notification,
-  );
+  const isEmergency =
+    notification.channelId === "carelink-emergency-v2" ||
+    (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.alertType as string)?.toUpperCase() === "EMERGENCY" ||
+    notification.title.toLowerCase().includes("emergency");
+
+  if (isEmergency) {
+    const fcmTokens = pushTokens
+      .filter((item) => item.platform === "android-fcm")
+      .map((item) => item.token);
+
+    if (fcmTokens.length > 0) {
+      const fcmSuccess = await sendNativeFcmEmergencyNotification(fcmTokens, notification);
+      if (fcmSuccess) return true;
+    }
+  }
+
+  const expoTokens = pushTokens
+    .map((item) => item.token)
+    .filter((token) => Expo.isExpoPushToken(token));
+
+  return sendPushNotification(expoTokens, notification);
 }
 
 export async function sendPatientCaregiversNotification(
@@ -193,26 +271,75 @@ export async function sendPatientCaregiversNotification(
     return;
   }
 
-  const pushTokens = await prisma.pushToken.findMany({
+  const caregiverTokens = await prisma.pushToken.findMany({
     where: {
       userId: {
         in: targetUserIds,
       },
     },
     select: {
+      userId: true,
       token: true,
+      platform: true,
     },
   });
 
-  console.log("Caregiver push tokens:", pushTokens);
+  console.log("Caregiver tokens found:", caregiverTokens);
 
-  const uniqueTokens = Array.from(
-    new Set(pushTokens.map((item) => item.token).filter(Boolean)),
-  );
+  const isEmergency =
+    notification.channelId === "carelink-emergency-v2" ||
+    (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
+    (notification.data?.alertType as string)?.toUpperCase() === "EMERGENCY" ||
+    notification.title.toLowerCase().includes("emergency");
 
-  console.log("Caregiver unique token strings:", uniqueTokens);
+  if (isEmergency) {
+    const fcmTokens = Array.from(
+      new Set(
+        caregiverTokens
+          .filter((item) => item.platform === "android-fcm")
+          .map((item) => item.token)
+      )
+    );
 
-  await sendPushNotification(uniqueTokens, notification);
+    let fcmSent = false;
+    if (fcmTokens.length > 0) {
+      fcmSent = await sendNativeFcmEmergencyNotification(fcmTokens, notification);
+    }
+
+    // Caregivers who don't have an FCM token fallback to Expo Push
+    const usersWithFcm = new Set(
+      caregiverTokens
+        .filter((item) => item.platform === "android-fcm")
+        .map((item) => item.userId)
+    );
+
+    const fallbackExpoTokens = Array.from(
+      new Set(
+        caregiverTokens
+          .filter((item) => (!usersWithFcm.has(item.userId) || !fcmSent) && Expo.isExpoPushToken(item.token))
+          .map((item) => item.token)
+      )
+    );
+
+    if (fallbackExpoTokens.length > 0) {
+      console.log("Sending emergency fallback Expo push to:", fallbackExpoTokens);
+      await sendPushNotification(fallbackExpoTokens, notification);
+    }
+  } else {
+    // Normal notifications (Food, Water, Assistance, Pill Reminder): use standard Expo push
+    const expoTokens = Array.from(
+      new Set(
+        caregiverTokens
+          .map((item) => item.token)
+          .filter((token) => Expo.isExpoPushToken(token))
+      )
+    );
+
+    console.log("Sending normal alert Expo push to:", expoTokens);
+    await sendPushNotification(expoTokens, notification);
+  }
 
   console.log("=================================");
 }
+
