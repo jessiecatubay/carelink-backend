@@ -63,11 +63,15 @@ export async function sendPushNotification(
 
   const messages = validTokens.map((token) => ({
     to: token,
-    sound: "default",
+    sound:
+      notification.channelId === "carelink-emergency-v2"
+        ? "alert_sound.wav"
+        : "default",
     title: notification.title,
     body: notification.body,
+    priority: "high" as const,
     data: notification.data ?? {},
-    ...(notification.channelId ? { channelId: notification.channelId } : {}),
+    channelId: notification.channelId ?? "carelink-alerts",
   }));
 
   console.log("Messages being sent:", messages);
