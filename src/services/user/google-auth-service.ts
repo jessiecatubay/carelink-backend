@@ -15,8 +15,13 @@ export async function GoogleAuthService(idToken: string) {
       };
     }
 
+    if (!firebaseAdminAuth) {
+      throw new Error("Firebase Admin Auth is not configured");
+    }
+
     // Verify the Firebase ID token
     const decodedToken = await firebaseAdminAuth.verifyIdToken(idToken);
+
 
     const firebaseUid = decodedToken.uid;
     const email = decodedToken.email?.trim().toLowerCase();
