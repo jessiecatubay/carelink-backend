@@ -353,7 +353,11 @@ export const emitPatientAlert = (
  * SATISFIED is NOT a Command enum value.
  * It is only a Socket/UI event.
  */
-export const emitSatisfied = (patientId: string, commandId: string) => {
+export const emitSatisfied = (
+  patientId: string,
+  commandId: string,
+  patientName?: string,
+) => {
   if (!io) {
     console.warn("Socket.io is not initialized");
     return;
@@ -366,6 +370,7 @@ export const emitSatisfied = (patientId: string, commandId: string) => {
     command: "SATISFIED",
     status: "Satisfied",
     patientId,
+    patientName,
     recordedAt: new Date().toISOString(),
   });
 

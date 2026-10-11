@@ -402,6 +402,41 @@ export class DeviceController {
     const normalizedCommand =
       (command || "").toUpperCase();
 
+    // Fetch patient info for rich notification and alert modal
+    let patientName = "Connected Patient";
+    let patientPhone = "";
+    try {
+      const patientUser = await prisma.user.findUnique({
+        where: { id: patientId },
+        include: {
+          patientProfile: {
+            include: {
+              emergencyContacts: true,
+            },
+          },
+          nonPatientProfile: true,
+        },
+      });
+
+      if (patientUser) {
+        const full = `${patientUser.firstName ?? ""} ${patientUser.lastName ?? ""}`.trim();
+        if (full) {
+          patientName = full;
+        }
+
+        const priorityContact =
+          patientUser.patientProfile?.emergencyContacts?.find((c) => c.isPriority) ??
+          patientUser.patientProfile?.emergencyContacts?.[0];
+
+        patientPhone =
+          priorityContact?.phoneNumber ??
+          patientUser.nonPatientProfile?.emergencyContact ??
+          "";
+      }
+    } catch (e) {
+      console.warn("Could not load patient user details:", e);
+    }
+
     if (
       normalizedCommand === "SATISFIED"
     ) {
@@ -430,6 +465,7 @@ export class DeviceController {
         patientId,
         updatedCommandId ??
           "satisfied",
+        patientName,
       );
 
       try {
@@ -439,13 +475,14 @@ export class DeviceController {
             title:
               "Request Satisfied",
             body:
-              "The patient's request has been marked as satisfied.",
+              `${patientName}'s request has been marked as satisfied.`,
             data: {
               command:
                 "SATISFIED",
               alertType:
                 "SATISFIED",
               patientId,
+              patientName,
             },
           },
         );
@@ -501,41 +538,6 @@ export class DeviceController {
             ?.status ?? "Pending",
         patientId,
       });
-    }
-
-    // Fetch patient info for rich notification and alert modal
-    let patientName = "Connected Patient";
-    let patientPhone = "";
-    try {
-      const patientUser = await prisma.user.findUnique({
-        where: { id: patientId },
-        include: {
-          patientProfile: {
-            include: {
-              emergencyContacts: true,
-            },
-          },
-          nonPatientProfile: true,
-        },
-      });
-
-      if (patientUser) {
-        const full = `${patientUser.firstName ?? ""} ${patientUser.lastName ?? ""}`.trim();
-        if (full) {
-          patientName = full;
-        }
-
-        const priorityContact =
-          patientUser.patientProfile?.emergencyContacts?.find((c) => c.isPriority) ??
-          patientUser.patientProfile?.emergencyContacts?.[0];
-
-        patientPhone =
-          priorityContact?.phoneNumber ??
-          patientUser.nonPatientProfile?.emergencyContact ??
-          "";
-      }
-    } catch (e) {
-      console.warn("Could not load patient user details:", e);
     }
 
     try {

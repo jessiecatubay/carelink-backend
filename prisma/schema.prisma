@@ -57,6 +57,8 @@ model PillReminder {
   title       String
   description String?
   scheduledAt DateTime
+  daysOfWeek  Int[]              @default([])
+  timeString  String?
   status      PillReminderStatus @default(PENDING)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
