@@ -4,6 +4,7 @@ import {
   sendPatientCaregiversNotification,
   sendUserPushNotification,
 } from "@/services/notification.service";
+import { getNextRecurringDate } from "@/services/pill-reminder.service";
 
 const POLL_INTERVAL_MS = 30_000;
 const BATCH_SIZE = 50;
@@ -67,13 +68,49 @@ async function sendDuePillReminders() {
           console.warn(`Socket emission failed for reminder ${reminder.id}:`, socketErr);
         }
 
-        // Mark reminder as SENT
-        await prisma.pillReminder.updateMany({
-          where: { id: reminder.id, status: "PENDING" },
-          data: { status: "SENT" },
-        });
+        // If reminder is recurring on specific days, advance to next occurrence
+        if (
+          Array.isArray(reminder.daysOfWeek) &&
+          reminder.daysOfWeek.length > 0
+        ) {
+          let targetHour = reminder.scheduledAt.getHours();
+          let targetMinute = reminder.scheduledAt.getMinutes();
 
-        console.log(`✅ Pill reminder ${reminder.id} ("${pillHeader}") sent to non-patient caregivers for patient ${reminder.patientId}.`);
+          if (reminder.timeString) {
+            const [h, m] = reminder.timeString.split(":");
+            targetHour = parseInt(h || "0", 10);
+            targetMinute = parseInt(m || "0", 10);
+          }
+
+          const nextScheduledAt = getNextRecurringDate(
+            reminder.daysOfWeek,
+            targetHour,
+            targetMinute,
+            new Date(),
+          );
+
+          await prisma.pillReminder.update({
+            where: { id: reminder.id },
+            data: {
+              scheduledAt: nextScheduledAt,
+              status: "PENDING",
+            },
+          });
+
+          console.log(
+            `🔁 Recurring pill reminder ${reminder.id} rescheduled to ${nextScheduledAt.toISOString()}`,
+          );
+        } else {
+          // Mark one-time reminder as SENT
+          await prisma.pillReminder.updateMany({
+            where: { id: reminder.id, status: "PENDING" },
+            data: { status: "SENT" },
+          });
+        }
+
+        console.log(
+          `✅ Pill reminder ${reminder.id} ("${pillHeader}") processed for patient ${reminder.patientId}.`,
+        );
       } catch (error) {
         console.error(`Failed to send pill reminder ${reminder.id}:`, error);
       }

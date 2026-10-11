@@ -44,13 +44,15 @@ export async function registerPushToken(
       message: "Push token registered successfully",
       data: pushToken,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Register push token error:", error);
 
-    return res.status(500).json({
+    const isClientError = error?.message?.includes("Invalid push token");
+
+    return res.status(isClientError ? 400 : 500).json({
       success: false,
       status: "error",
-      message: "Failed to register push token",
+      message: error?.message || "Failed to register push token",
     });
   }
 }

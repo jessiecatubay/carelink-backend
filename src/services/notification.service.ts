@@ -17,8 +17,15 @@ export async function savePushToken(
   token: string,
   platform?: string,
 ) {
-  if (platform !== "android-fcm" && !Expo.isExpoPushToken(token)) {
-    throw new Error("Invalid Expo push token");
+  const isExpo = Expo.isExpoPushToken(token);
+  const isNativeDeviceToken =
+    platform === "android-fcm" ||
+    platform === "fcm" ||
+    (typeof platform === "string" && platform.includes("fcm")) ||
+    token.length > 20;
+
+  if (!isExpo && !isNativeDeviceToken) {
+    throw new Error("Invalid push token: must be an Expo push token or native device push token");
   }
 
   console.log("Saving push token:", {
