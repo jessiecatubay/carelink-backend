@@ -116,6 +116,8 @@ model User {
   pushTokens PushToken[]
 
   tokens Token[]
+
+  vitalReadings VitalReadings[]
 }
 
 model PatientProfile {
@@ -176,6 +178,7 @@ model PatientNonPatient {
 model VitalReadings {
   id                  String   @id @default(uuid())
   deviceId            String
+  patientId           String?
   temperature         Float
   heartRate           Int
   batteryLevel        Int
@@ -183,7 +186,10 @@ model VitalReadings {
   recordedAt          DateTime @default(now())
   sensorContact       Boolean
 
+  patient             User?    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
   @@index([deviceId, recordedAt])
+  @@index([patientId, recordedAt])
 }
 
 model Commands {

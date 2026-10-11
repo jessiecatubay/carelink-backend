@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { chatWithCarelink } from "../controllers/ai.controller";
+import {
+  chatWithCarelink,
+  getEmergencyIncidentAdvisory,
+} from "../controllers/ai.controller";
 import { authenticateToken } from "@/middlewares/authenticate-token";
 
 const router = Router();
@@ -7,5 +10,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.post("/v1/chat", chatWithCarelink);
+router.post("/v1/emergency-advisory", getEmergencyIncidentAdvisory);
+router.get("/v1/emergency-advisory", getEmergencyIncidentAdvisory);
 
-export default router;
+export default router;
