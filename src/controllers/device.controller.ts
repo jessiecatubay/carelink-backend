@@ -393,12 +393,11 @@ export class DeviceController {
       }
     }
 
-    const result =
-      SendDeviceCommand(
-        deviceId,
-        command,
-        patientId,
-      );
+    SendDeviceCommand(
+      deviceId,
+      command,
+      patientId,
+    );
 
     const createdCommands = [];
     const payload = [];

@@ -7,20 +7,17 @@ import {
 } from "@/services/user";
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
-import { UserData } from "@/types/user";
 import {
   RefreshTokenService,
   ChangePasswordService,
   ForgotPasswordService,
   ResetPasswordService,
   VerifyResetCodeService,
-} from "@/services/auth";
-import { GetMeService } from "@/services/auth/get-me-service";
-import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
-import {
   VerifyEmailService,
   ResendEmailVerificationService,
 } from "@/services/auth";
+import { GetMeService } from "@/services/auth/get-me-service";
+import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 
 export class UserController {
   public getById = async (req: Request, res: Response) => {
