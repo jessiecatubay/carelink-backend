@@ -111,12 +111,14 @@ export class DeviceController {
         user.data.userId,
       );
 
+      const patientId = (req.body as any)?.patientId || user.data.userId;
+
       // ============================================================
       // CREATE VITALS HISTORY
       // ============================================================
 
       console.log();
-      console.log("Creating vitals history...");
+      console.log("Creating vitals history with patientId:", patientId);
 
       const vitalsResult = await CreateVitalsHistoryService(
         deviceId,
@@ -125,6 +127,7 @@ export class DeviceController {
         sensorContact,
         batteryLevel,
         batteryVoltage,
+        patientId,
       );
 
       console.log(
@@ -142,6 +145,7 @@ export class DeviceController {
 
       const payload = {
         deviceId,
+        patientId,
         temperature,
         heartRate,
         sensorContact,

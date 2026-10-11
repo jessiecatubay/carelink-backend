@@ -25,6 +25,7 @@ export interface LoginInput {
 
 export interface DeviceData {
   deviceId: string;
+  patientId?: string | null;
   temperature: number;
   heartRate: number;
   sensorContact: boolean;

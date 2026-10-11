@@ -53,3 +53,47 @@ export async function chatWithCarelink(
     });
   }
 }
+
+export async function getEmergencyIncidentAdvisory(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const patientId = (req.body?.patientId || req.query?.patientId) as string | undefined;
+    const deviceId = (req.body?.deviceId || req.query?.deviceId) as string | undefined;
+    const caregiverId = (req as any).user?.id as string | undefined;
+
+    if (!patientId && !caregiverId) {
+      return res.status(400).json({
+        success: false,
+        status: "error",
+        message: "patientId or authenticated session is required",
+      });
+    }
+
+    const { generateEmergencyAdvisory } = await import(
+      "../services/emergency-advisory.service"
+    );
+
+    const advisory = await generateEmergencyAdvisory({
+      patientId,
+      deviceId,
+      caregiverId,
+    });
+
+
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      data: advisory,
+    });
+  } catch (error) {
+    console.error("Carelink emergency advisory error:", error);
+
+    return res.status(500).json({
+      success: false,
+      status: "error",
+      message: "Failed to generate emergency incident advisory",
+    });
+  }
+}
