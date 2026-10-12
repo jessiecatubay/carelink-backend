@@ -1,7 +1,5 @@
 import { CommandController } from "@/controllers/command.controller";
 import { authenticateToken } from "@/middlewares/authenticate-token";
-import { validateSchema } from "@/middlewares/validate-schema";
-import { commandQuerySchema } from "@/schemas/command.schema";
 import { Router } from "express";
 
 const router = Router();

@@ -92,7 +92,7 @@ mqttClient.on("close", () => {
 export function SendDeviceCommand(
   deviceId: string,
   command: string,
-  patientId: string,
+  _patientId?: string,
 ): Promise<{
   success: boolean;
   message: string;

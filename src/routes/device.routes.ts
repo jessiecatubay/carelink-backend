@@ -1,8 +1,4 @@
 import { DeviceController } from "@/controllers/device.controller";
-import { authenticateToken } from "@/middlewares/authenticate-token";
-import { validateSchema } from "@/middlewares/validate-schema";
-import { deviceCommandSchema, vitalsSchema } from "@/schemas/device.schema";
-import { paginationRequestSchema } from "@/schemas/common.schema";
 import { Router } from "express";
 
 const router = Router();

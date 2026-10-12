@@ -1,10 +1,5 @@
 import { UpdatePatientProfileController } from "@/controllers/patient-profile.controller";
 import { authenticateToken } from "@/middlewares/authenticate-token";
-import { validateSchema } from "@/middlewares/validate-schema";
-import {
-  generateConnectionCodeSchema,
-  patientProfileSchema,
-} from "@/schemas/connection.schema";
 import { Router } from "express";
 
 const router = Router();

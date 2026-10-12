@@ -1,5 +1,4 @@
 import { VitalsRepository } from "@/repositories/vitals-history.repository";
-import { DeviceData } from "@/types/user";
 
 export async function CreateVitalsHistoryService(
   deviceId: string,

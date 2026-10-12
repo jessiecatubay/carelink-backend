@@ -1,9 +1,7 @@
 import { authenticateToken } from "@/middlewares/authenticate-token";
 import { validateSchema } from "@/middlewares/validate-schema";
 import {
-  getUserByIdSchema,
   loginSchema,
-  onboardingSchema,
   refreshSchema,
   signupSchema,
 } from "@/schemas/user.schema";

@@ -1,4 +1,4 @@
-import { commandValueSchema, vitalsSchema } from "@/schemas/device.schema";
+import { commandValueSchema } from "@/schemas/device.schema";
 import { z } from "zod";
 
 const timestampSchema = z.string().datetime({ offset: true });

@@ -2,10 +2,8 @@ import {
   GetAllCommandService,
   GetLatestCommandService,
   GetRecentCommandService,
-  UpdateLatestCommandService,
 } from "@/services/command";
 import { Request, Response } from "express";
-import { emitSatisfied } from "@/lib/socket";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 import { parsePagination } from "@/utils/pagination";
 

@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { emitPillReminder } from "@/lib/socket";
-import {
-  sendPatientCaregiversNotification,
-  sendUserPushNotification,
-} from "@/services/notification.service";
+import { sendPatientCaregiversNotification } from "@/services/notification.service";
 import { getNextRecurringDate } from "@/services/pill-reminder.service";
 
 const POLL_INTERVAL_MS = 30_000;

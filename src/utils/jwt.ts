@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { TokenRepository } from "@/repositories/token.repository";
 
 const JWT_SECRET = process.env.JWT_SECRET || "access-secret";
 
@@ -29,7 +28,6 @@ export function generateAccessToken(user: TokenPayload) {
 }
 
 export function generateTokens(user: TokenPayload) {
-  const tokenRepository = new TokenRepository();
   const accessToken = generateAccessToken(user);
 
   const refreshToken = jwt.sign(

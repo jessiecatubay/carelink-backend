@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { z } from "zod";
 import { savePushToken } from "../services/notification.service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
