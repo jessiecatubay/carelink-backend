@@ -40,7 +40,11 @@ export async function UserOnboardingService(userId, role, data) {
                     },
                 });
                 const connectionCode = existingProfile?.connectionCode || generateCode();
-                const parsedAge = data.age !== undefined && data.age !== null && data.age !== ""
+                const parsedAge = data.age !== undefined &&
+                    data.age !== null &&
+                    data.age !== "" &&
+                    !isNaN(Number(data.age)) &&
+                    Number(data.age) > 0
                     ? Number(data.age)
                     : undefined;
                 await tx.patientProfile.upsert({
@@ -48,14 +52,14 @@ export async function UserOnboardingService(userId, role, data) {
                         userId: user.id,
                     },
                     update: {
-                        age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : undefined,
+                        age: parsedAge !== undefined ? parsedAge : undefined,
                         gender: data.gender ? capitalizeWords(data.gender) : data.gender,
                         medicalConditions: data.medicalConditions,
                         notes: data.notes,
                         ...(!existingProfile?.connectionCode ? { connectionCode } : {}),
                     },
                     create: {
-                        age: parsedAge !== undefined && !isNaN(parsedAge) ? parsedAge : null,
+                        age: parsedAge !== undefined ? parsedAge : null,
                         gender: data.gender ? capitalizeWords(data.gender) : null,
                         medicalConditions: data.medicalConditions || null,
                         notes: data.notes || null,

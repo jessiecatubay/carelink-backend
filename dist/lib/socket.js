@@ -267,7 +267,7 @@ export const emitPatientAlert = (patientId, payload) => {
  * SATISFIED is NOT a Command enum value.
  * It is only a Socket/UI event.
  */
-export const emitSatisfied = (patientId, commandId) => {
+export const emitSatisfied = (patientId, commandId, patientName) => {
     if (!io) {
         console.warn("Socket.io is not initialized");
         return;
@@ -278,6 +278,7 @@ export const emitSatisfied = (patientId, commandId) => {
         command: "SATISFIED",
         status: "Satisfied",
         patientId,
+        patientName,
         recordedAt: new Date().toISOString(),
     });
     console.log(`✅ Satisfied event emitted to ${room}`);
@@ -321,5 +322,28 @@ export const emitConnectionUpdated = (patientId, nonPatientId, payload) => {
         timestamp: new Date().toISOString(),
     });
     console.log(`🔗 Connection updated event emitted for patient ${patientId} and caregiver ${nonPatientId}`);
+};
+/**
+ * Emit a pill reminder event directly to the patient's rooms.
+ */
+export const emitPillReminder = (patientId, payload) => {
+    if (!io) {
+        console.warn("Socket.io is not initialized");
+        return;
+    }
+    const patientRoom = getPatientRoom(patientId);
+    const userRoom = `user:${patientId}`;
+    const eventPayload = {
+        type: "PILL_REMINDER",
+        reminderId: payload.id,
+        patientId,
+        title: payload.title,
+        description: payload.description,
+        scheduledAt: payload.scheduledAt,
+        timestamp: new Date().toISOString(),
+    };
+    io.to(patientRoom).emit("pillReminder", eventPayload);
+    io.to(userRoom).emit("pillReminder", eventPayload);
+    console.log(`💊 Pill reminder emitted to patient ${patientId}: ${payload.title}`);
 };
 //# sourceMappingURL=socket.js.map
