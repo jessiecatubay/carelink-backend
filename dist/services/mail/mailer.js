@@ -34,6 +34,26 @@ function getTransporter() {
     }
     return transporter;
 }
+function cleanFromAddress(raw, appName) {
+    let cleaned = raw.trim();
+    // Strip surrounding quotes if present (e.g., from Render dashboard or .env)
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+        (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        cleaned = cleaned.slice(1, -1).trim();
+    }
+    // If already formatted like "Name <email@domain>" or Name <email@domain>
+    const match = cleaned.match(/^(?:["']?([^"']+)["']?\s*)?<([^>]+)>$/);
+    if (match) {
+        const name = match[1]?.trim() || appName;
+        const email = match[2]?.trim();
+        return `${name} <${email}>`;
+    }
+    // If it's just an email like "noreply@carelink-app.online"
+    if (cleaned.includes("@")) {
+        return `${appName} <${cleaned}>`;
+    }
+    return cleaned;
+}
 export async function sendEmail({ to, subject, html }) {
     const appName = process.env.APP_NAME || "CareLink";
     // Use Resend if RESEND_API_KEY is configured
@@ -42,7 +62,7 @@ export async function sendEmail({ to, subject, html }) {
         const rawFrom = process.env.RESEND_FROM ||
             process.env.SMTP_FROM ||
             "CareLink <onboarding@resend.dev>";
-        const from = rawFrom.includes("<") ? rawFrom : `"${appName}" <${rawFrom}>`;
+        const from = cleanFromAddress(rawFrom, appName);
         const { data, error } = await resend.emails.send({
             from,
             to,
