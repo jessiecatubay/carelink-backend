@@ -3,6 +3,7 @@ import { CreateCommandService, UpdateLatestCommandService, } from "../services/c
 import { CreateVitalsHistoryService, GetRecentVitalsHistoryService, GetVitalsHistoryService, } from "../services/device/index.js";
 import { SendDeviceCommand } from "../services/mqtt.service.js";
 import { parsePagination } from "../utils/pagination.js";
+import { prisma } from "../lib/prisma.js";
 import { sendPatientCaregiversNotification } from "../services/notification.service.js";
 import { GetUserByDeviceService } from "../services/patientProfile/index.js";
 export class DeviceController {
@@ -61,12 +62,13 @@ export class DeviceController {
                 });
             }
             console.log("Patient/User ID:", user.data.userId);
+            const patientId = req.body?.patientId || user.data.userId;
             // ============================================================
             // CREATE VITALS HISTORY
             // ============================================================
             console.log();
-            console.log("Creating vitals history...");
-            const vitalsResult = await CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage);
+            console.log("Creating vitals history with patientId:", patientId);
+            const vitalsResult = await CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage, patientId);
             console.log("CreateVitalsHistoryService completed.");
             console.log("Vitals history result:", vitalsResult);
             // ============================================================
@@ -74,6 +76,7 @@ export class DeviceController {
             // ============================================================
             const payload = {
                 deviceId,
+                patientId,
                 temperature,
                 heartRate,
                 sensorContact,
@@ -185,17 +188,65 @@ export class DeviceController {
         const { deviceId, command, patientId, } = req.body;
         console.log("Patient pressed a command", req.body);
         const rawConnected = req.body.connectedNonpatients;
-        const connectedNonpatients = Array.isArray(rawConnected)
+        let connectedNonpatients = Array.isArray(rawConnected)
             ? rawConnected
                 .map((item) => typeof item === "string"
                 ? item
                 : item?.nonPatientId)
                 .filter(Boolean)
             : [];
-        const result = SendDeviceCommand(deviceId, command, patientId);
+        if (connectedNonpatients.length === 0 && patientId) {
+            try {
+                const connections = await prisma.patientNonPatient.findMany({
+                    where: {
+                        patientId,
+                        status: "CONNECTED",
+                    },
+                    select: {
+                        nonPatientId: true,
+                    },
+                });
+                connectedNonpatients = connections.map((c) => c.nonPatientId);
+            }
+            catch (e) {
+                console.warn("Could not load connected caregivers:", e);
+            }
+        }
+        SendDeviceCommand(deviceId, command, patientId);
         const createdCommands = [];
         const payload = [];
         const normalizedCommand = (command || "").toUpperCase();
+        // Fetch patient info for rich notification and alert modal
+        let patientName = "Connected Patient";
+        let patientPhone = "";
+        try {
+            const patientUser = await prisma.user.findUnique({
+                where: { id: patientId },
+                include: {
+                    patientProfile: {
+                        include: {
+                            emergencyContacts: true,
+                        },
+                    },
+                    nonPatientProfile: true,
+                },
+            });
+            if (patientUser) {
+                const full = `${patientUser.firstName ?? ""} ${patientUser.lastName ?? ""}`.trim();
+                if (full) {
+                    patientName = full;
+                }
+                const priorityContact = patientUser.patientProfile?.emergencyContacts?.find((c) => c.isPriority) ??
+                    patientUser.patientProfile?.emergencyContacts?.[0];
+                patientPhone =
+                    priorityContact?.phoneNumber ??
+                        patientUser.nonPatientProfile?.emergencyContact ??
+                        "";
+            }
+        }
+        catch (e) {
+            console.warn("Could not load patient user details:", e);
+        }
         if (normalizedCommand === "SATISFIED") {
             let updatedCommandId;
             for (const nonPatientId of connectedNonpatients) {
@@ -206,15 +257,16 @@ export class DeviceController {
                     updated.data?.id;
             }
             emitSatisfied(patientId, updatedCommandId ??
-                "satisfied");
+                "satisfied", patientName);
             try {
                 await sendPatientCaregiversNotification(patientId, {
                     title: "Request Satisfied",
-                    body: "The patient's request has been marked as satisfied.",
+                    body: `${patientName}'s request has been marked as satisfied.`,
                     data: {
                         command: "SATISFIED",
                         alertType: "SATISFIED",
                         patientId,
+                        patientName,
                     },
                 });
             }
@@ -246,62 +298,63 @@ export class DeviceController {
             });
         }
         try {
-            if (payload.length > 0) {
-                emitPatientAlert(patientId, payload[0]);
-            }
-            else {
-                emitPatientAlert(patientId, {
-                    deviceId,
-                    command: normalizedCommand,
-                    alertType: normalizedCommand,
-                    recordedAt: new Date().toISOString(),
-                    status: "Pending",
-                    patientId,
-                });
-            }
+            const socketPayload = {
+                id: createdCommands[0]?.data?.id,
+                deviceId,
+                command: normalizedCommand,
+                alertType: normalizedCommand,
+                patientId,
+                patientName,
+                phoneNumber: patientPhone,
+                recordedAt: new Date().toISOString(),
+                status: "Pending",
+            };
+            emitPatientAlert(patientId, socketPayload);
         }
         catch (error) {
             console.error("Socket not initialized:", error);
         }
         try {
             let title = "CareLink Alert";
-            let body = "The patient sent a new alert.";
+            let body = `${patientName} sent a new alert.`;
+            let channelId = "carelink-alerts";
             switch (normalizedCommand) {
                 case "FOOD":
-                    title =
-                        "Food Assistance";
-                    body =
-                        "The patient is requesting food.";
+                    title = "🍱 Food Assistance";
+                    body = `${patientName} is requesting food.`;
+                    channelId = "carelink-alerts";
                     break;
                 case "WATER":
-                    title =
-                        "Water Assistance";
-                    body =
-                        "The patient is requesting water.";
+                    title = "💧 Water Assistance";
+                    body = `${patientName} is requesting water.`;
+                    channelId = "carelink-alerts";
                     break;
                 case "ASSISTANCE":
-                    title =
-                        "Assistance Requested";
-                    body =
-                        "The patient is requesting assistance.";
+                    title = "🙋 Assistance Requested";
+                    body = `${patientName} is requesting assistance.`;
+                    channelId = "carelink-alerts";
                     break;
                 case "EMERGENCY":
-                    title =
-                        "Emergency Alert";
-                    body =
-                        "The patient has triggered a critical emergency alert!";
+                    title = "🚨 CARELINK EMERGENCY";
+                    body = `${patientName} needs emergency assistance.\nPatient activated the Emergency button.`;
+                    channelId = "carelink-emergency-v2";
                     break;
             }
             await sendPatientCaregiversNotification(patientId, {
                 title,
                 body,
+                channelId,
                 data: {
                     command: normalizedCommand,
                     alertType: normalizedCommand,
+                    type: normalizedCommand,
                     patientId,
+                    patientName,
+                    phoneNumber: patientPhone,
+                    timestamp: new Date().toLocaleTimeString(),
                 },
-            });
-            console.log("Sending push notification for patient:", patientId);
+            }, connectedNonpatients);
+            console.log("Sending push notification for patient:", patientId, "Command:", normalizedCommand);
             console.log("Connected non-patients:", connectedNonpatients);
         }
         catch (error) {
@@ -311,7 +364,11 @@ export class DeviceController {
             .status(createdCommands[0]?.code ??
             200)
             .json({
-            ...result,
+            success: true,
+            status: "success",
+            message: normalizedCommand === "EMERGENCY"
+                ? "Emergency alert sent successfully to connected caregivers"
+                : "Command processed successfully",
             data: createdCommands,
         });
     };

@@ -1,8 +1,16 @@
 import { VitalsRepository } from "../../repositories/vitals-history.repository.js";
-export async function CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage) {
+export async function CreateVitalsHistoryService(deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage, patientId) {
     const vitalsRespository = new VitalsRepository();
     try {
-        await vitalsRespository.create({ deviceId, temperature, heartRate, sensorContact, batteryLevel, batteryVoltage });
+        await vitalsRespository.create({
+            deviceId,
+            patientId: patientId ?? null,
+            temperature,
+            heartRate,
+            sensorContact,
+            batteryLevel,
+            batteryVoltage,
+        });
         return {
             code: 200,
             status: "success",

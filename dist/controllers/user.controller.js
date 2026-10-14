@@ -1,8 +1,7 @@
 import { SignupService, LoginService, UpdateUserService, GetUserByIdService, GoogleAuthService, } from "../services/user/index.js";
 import { UserOnboardingService } from "../services/user/user-onboarding-service.js";
-import { RefreshTokenService, ChangePasswordService, ForgotPasswordService, ResetPasswordService, VerifyResetCodeService, } from "../services/auth/index.js";
+import { RefreshTokenService, ChangePasswordService, ForgotPasswordService, ResetPasswordService, VerifyResetCodeService, VerifyEmailService, ResendEmailVerificationService, } from "../services/auth/index.js";
 import { GetMeService } from "../services/auth/get-me-service.js";
-import { VerifyEmailService, ResendEmailVerificationService, } from "../services/auth/index.js";
 export class UserController {
     getById = async (req, res) => {
         const { id } = req.body;
@@ -26,21 +25,21 @@ export class UserController {
         return res.status(result.code).json(result);
     };
     update = async (req, res) => {
-        const email = req.body?.email || req.user?.email;
+        const email = req.user?.email;
         const data = { ...req.body };
         delete data.email;
         if (!email) {
-            return res.status(400).json({
-                code: 400,
+            return res.status(401).json({
+                code: 401,
                 status: "error",
-                message: "Email is required.",
+                message: "Unauthorized. User email is missing from session.",
             });
         }
         const result = await UpdateUserService(email, data);
         return res.status(result.code).json(result);
     };
     onBoarded = async (req, res) => {
-        const userId = req.body?.userId || req.user?.id;
+        const userId = req.user?.id || req.body?.userId;
         const { role, ...data } = req.body;
         if (!userId) {
             return res.status(400).json({
@@ -85,8 +84,16 @@ export class UserController {
         }
     };
     changePassword = async (req, res) => {
-        const { id, newPassword, currentPassword } = req.body;
-        const result = await ChangePasswordService(id, newPassword, currentPassword);
+        const userId = req.user?.id || req.body?.id;
+        const { newPassword, currentPassword } = req.body;
+        if (!userId) {
+            return res.status(401).json({
+                code: 401,
+                status: "error",
+                message: "Unauthorized. User session missing.",
+            });
+        }
+        const result = await ChangePasswordService(userId, newPassword, currentPassword);
         return res.status(result.code).json(result);
     };
     forgotPassword = async (req, res) => {

@@ -37,6 +37,8 @@ export async function ConnectPatientNonpatientService(nonPatientId, connectionCo
                 message: "You cannot connect to your own patient account.",
             };
         }
+        // Check if connection record exists
+        const existingConnection = await patientNonpatientRepository.findAnyConnection(patientProfile.userId, nonPatientId);
         // Save or update relationship if provided
         const trimmedRel = (relationship || "").trim();
         if (trimmedRel) {
@@ -49,7 +51,11 @@ export async function ConnectPatientNonpatientService(nonPatientId, connectionCo
                 },
             });
         }
-        const existingConnection = await patientNonpatientRepository.findAnyConnection(patientProfile.userId, nonPatientId);
+        // Ensure all existing connections for this caregiver are not currentPatient
+        await prisma.patientNonPatient.updateMany({
+            where: { nonPatientId },
+            data: { currentPatient: false },
+        });
         if (existingConnection) {
             await patientNonpatientRepository.update(patientProfile.userId, nonPatientId, {
                 status: "CONNECTED",

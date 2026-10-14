@@ -6,30 +6,65 @@ export class PatientNonpatientController {
         return res.status(result.code).json(result);
     };
     connect = async (req, res) => {
-        const { connectionCode, nonPatientId, relationship } = req.body;
+        const nonPatientId = req.user?.id || req.body?.nonPatientId;
+        const { connectionCode, relationship } = req.body;
+        if (!nonPatientId) {
+            return res.status(401).json({
+                code: 401,
+                status: "error",
+                message: "Unauthorized. Session required.",
+            });
+        }
         const result = await ConnectPatientNonpatientService(nonPatientId, connectionCode, relationship);
         return res.status(result.code).json(result);
     };
     findConnectedPatient = async (req, res) => {
-        const { nonPatientId } = req.body;
-        console.log("fafoaijwefoinasdlkfas", req.body);
+        const nonPatientId = req.user?.id || req.body?.nonPatientId;
+        if (!nonPatientId) {
+            return res.status(401).json({
+                code: 401,
+                status: "error",
+                message: "Unauthorized. Session required.",
+            });
+        }
         const result = await FindConnectedPatientService(nonPatientId);
         return res.status(result.code).json(result);
     };
     findConnectedNonPatient = async (req, res) => {
-        console.log(req.body);
-        const result = await FindConnectedNonpatientService(req.body.userId);
+        const patientId = req.user?.id || req.body?.userId;
+        if (!patientId) {
+            return res.status(401).json({
+                code: 401,
+                status: "error",
+                message: "Unauthorized. Session required.",
+            });
+        }
+        const result = await FindConnectedNonpatientService(patientId);
         return res.status(result.code).json(result);
     };
     findConnectedCaregivers = async (req, res) => {
-        const patientId = req.body.patientId || req.body.userId || req.user?.id;
+        const patientId = req.user?.id || req.body?.patientId || req.body?.userId;
+        if (!patientId) {
+            return res.status(401).json({
+                code: 401,
+                status: "error",
+                message: "Unauthorized. Session required.",
+            });
+        }
         const result = await FindConnectedCaregiversService(patientId);
         return res.status(result.code).json(result);
     };
     update = async (req, res) => {
+        const currentUserId = req.user?.id;
         const { patientId, nonPatientId, ...data } = req.body;
-        console.log(req.body);
-        console.log(data);
+        // Verify current user is either the patient or the caregiver involved
+        if (currentUserId && currentUserId !== patientId && currentUserId !== nonPatientId) {
+            return res.status(403).json({
+                code: 403,
+                status: "error",
+                message: "Forbidden. You cannot modify connections for other users.",
+            });
+        }
         const result = await UpdatePatientNonpatientService(patientId, nonPatientId, data);
         return res.status(result.code).json(result);
     };

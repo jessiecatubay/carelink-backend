@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { TokenRepository } from "../repositories/token.repository.js";
 const JWT_SECRET = process.env.JWT_SECRET || "access-secret";
 export var TokenExpiry;
 (function (TokenExpiry) {
@@ -10,7 +9,6 @@ export function generateAccessToken(user) {
     return jwt.sign({ id: user.id, email: user.email, role: user.role ?? "PATIENT" }, JWT_SECRET, { expiresIn: "7d" });
 }
 export function generateTokens(user) {
-    const tokenRepository = new TokenRepository();
     const accessToken = generateAccessToken(user);
     const refreshToken = jwt.sign({ id: user.id, email: user.email, role: user.role ?? "PATIENT" }, JWT_SECRET, { expiresIn: "7d" });
     return { accessToken, refreshToken };

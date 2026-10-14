@@ -62,7 +62,7 @@ mqttClient.on("close", () => {
 // =====================================================
 // SEND DEVICE COMMAND
 // =====================================================
-export function SendDeviceCommand(deviceId, command, patientId) {
+export function SendDeviceCommand(deviceId, command, _patientId) {
     const parsedCommand = commandValueSchema.safeParse(command.toUpperCase());
     if (!parsedCommand.success || parsedCommand.data === "SATISFIED") {
         return Promise.resolve({

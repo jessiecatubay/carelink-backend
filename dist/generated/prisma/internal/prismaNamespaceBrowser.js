@@ -74,6 +74,8 @@ export const PillReminderScalarFieldEnum = {
     title: 'title',
     description: 'description',
     scheduledAt: 'scheduledAt',
+    daysOfWeek: 'daysOfWeek',
+    timeString: 'timeString',
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -143,6 +145,7 @@ export const PatientNonPatientScalarFieldEnum = {
 export const VitalReadingsScalarFieldEnum = {
     id: 'id',
     deviceId: 'deviceId',
+    patientId: 'patientId',
     temperature: 'temperature',
     heartRate: 'heartRate',
     batteryLevel: 'batteryLevel',

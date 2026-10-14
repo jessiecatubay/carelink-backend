@@ -1,6 +1,5 @@
 import { requestSchema, uuidSchema } from "./common.schema.js";
 import { z } from "zod";
-const roleSchema = z.enum(["PATIENT", "NON_PATIENT", "USER"]);
 export const signupSchema = requestSchema(z
     .object({
     firstName: z.string().trim().min(2, "First name is required").max(50),
