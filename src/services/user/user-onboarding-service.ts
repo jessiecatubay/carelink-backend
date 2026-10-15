@@ -3,7 +3,7 @@ import { TokenType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { OnboardingData } from "@/types/user";
 import { generateCode } from "@/utils/generateConnectionCode";
-import { generateTokens } from "@/utils/jwt";
+import { generateTokens, TOKEN_EXPIRY_MS } from "@/utils/jwt";
 import { capitalizeWords } from "@/utils/string";
 
 export async function UserOnboardingService(
@@ -126,7 +126,7 @@ export async function UserOnboardingService(
         data: {
           userId: fullUser.id,
           token: tokens.refreshToken,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          expiresAt: new Date(Date.now() + TOKEN_EXPIRY_MS),
           type: TokenType.REFRESH,
         },
       });

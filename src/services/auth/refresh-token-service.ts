@@ -1,6 +1,11 @@
 import { UserRepository } from "@/repositories/user.repository";
 import { TokenRepository } from "@/repositories/token.repository";
-import { generateTokens, TokenExpiry, verifyRefreshToken } from "@/utils/jwt";
+import {
+  generateTokens,
+  TOKEN_EXPIRY_MS,
+  TokenExpiry,
+  verifyRefreshToken,
+} from "@/utils/jwt";
 
 export async function RefreshTokenService(refreshToken?: string) {
   if (!refreshToken) {
@@ -63,7 +68,7 @@ export async function RefreshTokenService(refreshToken?: string) {
   await tokenRepository.createRefreshToken({
     userId: user.id,
     token: tokens.refreshToken,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expiresAt: new Date(Date.now() + TOKEN_EXPIRY_MS), // 7 days
   });
 
   return {
