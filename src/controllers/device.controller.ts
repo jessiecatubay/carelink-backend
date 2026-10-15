@@ -265,6 +265,7 @@ export class DeviceController {
     req: AuthenticatedRequest,
     res: Response,
   ) => {
+    console.log("req?.user",req?.user);
     try {
       if (!req?.user?.id) {
         return res.status(401).json({
@@ -286,10 +287,16 @@ export class DeviceController {
           });
       }
 
+      const targetPatientId =
+        typeof req.query.patientId === "string"
+          ? req.query.patientId
+          : undefined;
+
       const result =
         await GetVitalsHistoryService(
           req.user.id,
           pagination,
+          targetPatientId,
         );
 
       return res
@@ -315,6 +322,7 @@ export class DeviceController {
     req: AuthenticatedRequest,
     res: Response,
   ) => {
+    console.log("req?.user in getRecentPatientVitals:", req?.user);
     try {
       if (!req.user?.id) {
         return res.status(401).json({
@@ -323,9 +331,15 @@ export class DeviceController {
         });
       }
 
+      const targetPatientId =
+        typeof req.query.patientId === "string"
+          ? req.query.patientId
+          : undefined;
+
       const result =
         await GetRecentVitalsHistoryService(
           req.user.id,
+          targetPatientId,
         );
 
       return res

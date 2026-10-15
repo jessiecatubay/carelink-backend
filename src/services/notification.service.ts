@@ -34,7 +34,7 @@ export async function savePushToken(
     platform,
   });
 
-  return prisma.pushToken.upsert({
+  const record = await prisma.pushToken.upsert({
     where: {
       token,
     },
@@ -49,6 +49,33 @@ export async function savePushToken(
       platform,
     },
   });
+
+  // Remove any stale push tokens for this user under the same platform category
+  // (e.g. older Expo push tokens from previous installs or logins)
+  try {
+    const isFcm = platform === "android-fcm" || platform === "fcm";
+    if (isFcm) {
+      await prisma.pushToken.deleteMany({
+        where: {
+          userId,
+          platform: { in: ["android-fcm", "fcm"] },
+          token: { not: token },
+        },
+      });
+    } else {
+      await prisma.pushToken.deleteMany({
+        where: {
+          userId,
+          platform: { notIn: ["android-fcm", "fcm"] },
+          token: { not: token },
+        },
+      });
+    }
+  } catch (cleanErr) {
+    console.warn("Could not clean old push tokens:", cleanErr);
+  }
+
+  return record;
 }
 
 export async function sendNativeFcmEmergencyNotification(
@@ -278,11 +305,14 @@ export async function sendPatientCaregiversNotification(
     return;
   }
 
-  const caregiverTokens = await prisma.pushToken.findMany({
+  const rawCaregiverTokens = await prisma.pushToken.findMany({
     where: {
       userId: {
         in: targetUserIds,
       },
+    },
+    orderBy: {
+      updatedAt: "desc",
     },
     select: {
       userId: true,
@@ -291,7 +321,20 @@ export async function sendPatientCaregiversNotification(
     },
   });
 
-  console.log("Caregiver tokens found:", caregiverTokens);
+  // Deduplicate to at most 1 token per user per category (expo vs fcm)
+  // using the most recently updated token
+  const seenUserType = new Set<string>();
+  const caregiverTokens: typeof rawCaregiverTokens = [];
+  for (const item of rawCaregiverTokens) {
+    const isFcm = item.platform === "android-fcm" || item.platform === "fcm";
+    const key = `${item.userId}:${isFcm ? "fcm" : "expo"}`;
+    if (!seenUserType.has(key)) {
+      seenUserType.add(key);
+      caregiverTokens.push(item);
+    }
+  }
+
+  console.log("Caregiver tokens found (deduplicated):", caregiverTokens);
 
   const isEmergency =
     notification.channelId === "carelink-emergency-v2" ||
