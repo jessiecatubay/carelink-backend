@@ -12,8 +12,16 @@ router.post(
   "/v1/get-by-id-emergency-contact",
   emergencyContactController.getById,
 );
+router.get(
+  "/v1/get-by-id-emergency-contact",
+  emergencyContactController.getById,
+);
 
 router.post(
+  "/v1/emergency-contacts/patient",
+  emergencyContactController.getByPatientProfileId,
+);
+router.get(
   "/v1/emergency-contacts/patient",
   emergencyContactController.getByPatientProfileId,
 );

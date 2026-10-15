@@ -301,6 +301,47 @@ export const getSocket = () => {
  * ================================================================
  */
 
+const wristActivityMap = new Map<
+  string,
+  {
+    lastVitals: number;
+    timer: NodeJS.Timeout;
+  }
+>();
+
+export const emitWristInactive = (patientId: string, deviceId?: string) => {
+  if (!io) {
+    return;
+  }
+
+  const room = getPatientRoom(patientId);
+
+  io.to(room).emit("patientWristInactive", {
+    patientId,
+    deviceId,
+    status: "INACTIVE",
+    timestamp: new Date().toISOString(),
+  });
+
+  console.log(`⏱️ Wrist for patient ${patientId} is now INACTIVE (no vitals for 30s)`);
+};
+
+export const updateWristActivity = (patientId: string, deviceId?: string) => {
+  const existing = wristActivityMap.get(patientId);
+  if (existing?.timer) {
+    clearTimeout(existing.timer);
+  }
+
+  const timer = setTimeout(() => {
+    emitWristInactive(patientId, deviceId);
+  }, 30_000);
+
+  wristActivityMap.set(patientId, {
+    lastVitals: Date.now(),
+    timer,
+  });
+};
+
 /**
  * Send latest vitals to caregivers connected to a patient.
  */
@@ -312,6 +353,8 @@ export const emitPatientVitals = (
     console.warn("Socket.io is not initialized");
     return;
   }
+
+  updateWristActivity(patientId, payload?.deviceId);
 
   const room = getPatientRoom(patientId);
 

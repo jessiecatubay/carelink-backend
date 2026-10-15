@@ -19,5 +19,13 @@ router.post(
   "/v1/register-device-owned",
   updatePatientProfileController.registerDeviceOwned,
 );
+router.post(
+  "/v1/remove-device-owned",
+  updatePatientProfileController.removeDeviceOwned,
+);
+router.delete(
+  "/v1/remove-device-owned",
+  updatePatientProfileController.removeDeviceOwned,
+);
 
 export default router;

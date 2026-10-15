@@ -1,7 +1,11 @@
-import { GenerateConnectionCodeService, UpdatePatientProfileService } from "@/services/patientProfile"
-import { Request, Response } from "express";
-import { RegisterDeviceOwnedService } from "@/services/patientProfile";
+import {
+  GenerateConnectionCodeService,
+  UpdatePatientProfileService,
+  RegisterDeviceOwnedService,
+  RemoveDeviceOwnedService,
+} from "@/services/patientProfile";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
+import { Request, Response } from "express";
 
 export class UpdatePatientProfileController {
   public update = async (req: Request, res: Response) => {
@@ -10,7 +14,7 @@ export class UpdatePatientProfileController {
     const result = await UpdatePatientProfileService(patientId, data);
 
     return res.status(result.code).json(result);
-  }
+  };
 
   public generateConnectionCode = async (req: Request, res: Response) => {
     const { id } = req.body;
@@ -18,14 +22,41 @@ export class UpdatePatientProfileController {
     const result = await GenerateConnectionCodeService(id);
 
     return res.status(result.code).json(result);
-  }
+  };
 
   public registerDeviceOwned = async (req: AuthenticatedRequest, res: Response) => {
-    const { deviceId } = req.body;
-    if(!req?.user?.id) return;
+    const { deviceId, patientId } = req.body;
+    const targetUserId =
+      (req.user?.role === "PATIENT" ? req.user.id : patientId) || req.user?.id;
 
-    const result = await RegisterDeviceOwnedService(req.user.id, deviceId);
+    if (!targetUserId) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        message: "Unauthorized. User ID not found.",
+      });
+    }
+
+    const result = await RegisterDeviceOwnedService(targetUserId, deviceId);
 
     return res.status(result.code).json(result);
-  }
+  };
+
+  public removeDeviceOwned = async (req: AuthenticatedRequest, res: Response) => {
+    const { patientId } = req.body || {};
+    const targetUserId =
+      (req.user?.role === "PATIENT" ? req.user.id : patientId) || req.user?.id;
+
+    if (!targetUserId) {
+      return res.status(401).json({
+        code: 401,
+        status: "error",
+        message: "Unauthorized. User ID not found.",
+      });
+    }
+
+    const result = await RemoveDeviceOwnedService(targetUserId);
+
+    return res.status(result.code).json(result);
+  };
 }

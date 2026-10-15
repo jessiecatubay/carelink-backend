@@ -28,7 +28,13 @@ export class UserRepository {
             include: {
               patient: {
                 include: {
-                  patientProfile: true,
+                  patientProfile: {
+                    include: {
+                      emergencyContacts: {
+                        orderBy: [{ isPriority: "desc" }, { createdAt: "desc" }],
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -43,7 +49,13 @@ export class UserRepository {
           id,
         },
         include: {
-          patientProfile: true,
+          patientProfile: {
+            include: {
+              emergencyContacts: {
+                orderBy: [{ isPriority: "desc" }, { createdAt: "desc" }],
+              },
+            },
+          },
           patientConnections: {
             where: {
               status: "CONNECTED",

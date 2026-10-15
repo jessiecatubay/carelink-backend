@@ -14,13 +14,17 @@ export class PatientProfileRepository {
   }
 
   async getUserByDeviceId(deviceId: string) {
-    return await prisma.patientProfile.findUnique({
+    return await prisma.patientProfile.findFirst({
       where: {
-        deviceOwned: deviceId,
+        deviceOwned: {
+          equals: deviceId,
+          mode: "insensitive",
+        },
       },
       select: {
         userId: true,
-      }
-    })
+        deviceOwned: true,
+      },
+    });
   }
 }
