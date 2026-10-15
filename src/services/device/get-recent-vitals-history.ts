@@ -1,10 +1,13 @@
 import { VitalsRepository } from "@/repositories/vitals-history.repository";
 
-export async function GetRecentVitalsHistoryService(nonPatientId: string) {
+export async function GetRecentVitalsHistoryService(
+  userId: string,
+  targetPatientId?: string,
+) {
   const vitalsRepository = new VitalsRepository();
 
   try {
-    const data = await vitalsRepository.getRecent(nonPatientId);
+    const data = await vitalsRepository.getRecent(userId, targetPatientId);
 
     return {
       code: 200,
@@ -13,6 +16,7 @@ export async function GetRecentVitalsHistoryService(nonPatientId: string) {
       data: data,
     };
   } catch (error) {
+    console.error("GetRecentVitalsHistoryService error:", error);
     return {
       code: 500,
       status: "error",

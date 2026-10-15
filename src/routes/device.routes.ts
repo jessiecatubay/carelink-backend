@@ -1,3 +1,4 @@
+import { authenticateToken } from "@/middlewares/authenticate-token";
 import { DeviceController } from "@/controllers/device.controller";
 import { Router } from "express";
 
@@ -13,11 +14,13 @@ router.post(
 );
 router.get(
   "/v1/get-full-vitals",
+  authenticateToken,
   // validateSchema(paginationRequestSchema),
   deviceController.getFullPatientVitals,
 );
 router.get(
   "/v1/get-recent-vitals",
+  authenticateToken,
   // validateSchema(paginationRequestSchema),
   deviceController.getRecentPatientVitals,
 );

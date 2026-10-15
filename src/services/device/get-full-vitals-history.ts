@@ -2,13 +2,18 @@ import { VitalsRepository } from "@/repositories/vitals-history.repository";
 import { PaginationParams } from "@/utils/pagination";
 
 export async function GetVitalsHistoryService(
-  nonPatientId: string,
+  userId: string,
   pagination: PaginationParams,
+  targetPatientId?: string,
 ) {
   const vitalsRepository = new VitalsRepository();
 
   try {
-    const result = await vitalsRepository.get(nonPatientId, pagination);
+    const result = await vitalsRepository.get(
+      userId,
+      pagination,
+      targetPatientId,
+    );
     const totalPages = Math.ceil(result.totalItems / pagination.limit);
 
     return {
@@ -27,6 +32,7 @@ export async function GetVitalsHistoryService(
       },
     };
   } catch (error) {
+    console.error("GetVitalsHistoryService error:", error);
     return {
       code: 500,
       status: "error",
