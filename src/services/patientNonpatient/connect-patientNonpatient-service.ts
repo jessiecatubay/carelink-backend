@@ -83,29 +83,57 @@ export async function ConnectPatientNonpatientService(
           currentPatient: true,
         },
       );
-
-      emitConnectionUpdated(patientProfile.userId, nonPatientId, {
-        relationship: trimmedRel,
-        patientName: `${patientProfile.user?.firstName || ""} ${patientProfile.user?.lastName || ""}`.trim(),
-        nonPatientName: `${nonPatient.firstName || ""} ${nonPatient.lastName || ""}`.trim(),
+    } else {
+      await patientNonpatientRepository.create({
+        patientId: patientProfile.userId,
+        nonPatientId,
+        status: "CONNECTED",
+        currentPatient: true,
       });
-
-      return {
-        code: 200,
-        status: "success",
-        message: "Successfully connected to patient",
-        data: {
-          patientId: patientProfile.userId,
-        },
-      };
     }
 
-    await patientNonpatientRepository.create({
-      patientId: patientProfile.userId,
-      nonPatientId,
-      status: "CONNECTED",
-      currentPatient: true,
-    });
+    // Automatically record caregiver in EmergencyContact table for this patient if phone exists
+    const np = nonPatient as any;
+    const caregiverPhone =
+      np?.nonPatientProfile?.emergencyContact || np?.phoneNumber;
+    if (caregiverPhone) {
+      try {
+        const caregiverName =
+          np?.nonPatientProfile?.emergencyContactName ||
+          `${np?.firstName || ""} ${np?.lastName || ""}`.trim() ||
+          "Caregiver";
+        const existingEC = await prisma.emergencyContact.findFirst({
+          where: {
+            patientProfileId: patientProfile.userId,
+            phoneNumber: caregiverPhone,
+          },
+        });
+
+        if (!existingEC) {
+          const hasPriority = await prisma.emergencyContact.findFirst({
+            where: {
+              patientProfileId: patientProfile.userId,
+              isPriority: true,
+            },
+          });
+
+          await prisma.emergencyContact.create({
+            data: {
+              name: caregiverName,
+              relationship:
+                trimmedRel ||
+                np?.nonPatientProfile?.relationship ||
+                "Caregiver",
+              phoneNumber: caregiverPhone,
+              patientProfileId: patientProfile.userId,
+              isPriority: !hasPriority,
+            },
+          });
+        }
+      } catch (ecErr) {
+        console.error("Auto-sync emergency contact error:", ecErr);
+      }
+    }
 
     emitConnectionUpdated(patientProfile.userId, nonPatientId, {
       relationship: trimmedRel,

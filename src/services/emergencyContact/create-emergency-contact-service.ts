@@ -9,8 +9,9 @@ export async function CreateEmergencyContactService(data: EmergencyContactData) 
       name: data.name,
       relationship: data.relationship,
       phoneNumber: data.phoneNumber,
-      patientProfileId: data.patientProfileId
-     });
+      isPriority: data.isPriority,
+      patientProfileId: data.patientProfileId,
+    });
 
     return {
       code: 201,

@@ -89,7 +89,13 @@ export class PatientNonpatientRepository {
       include: {
         patient: {
           include: {
-            patientProfile: true,
+            patientProfile: {
+              include: {
+                emergencyContacts: {
+                  orderBy: [{ isPriority: "desc" }, { createdAt: "desc" }],
+                },
+              },
+            },
           },
         },
       },
