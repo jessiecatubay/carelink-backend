@@ -1,6 +1,6 @@
 import { UserRepository } from "@/repositories/user.repository";
 import { LoginInput } from "@/types/user";
-import { generateTokens } from "@/utils/jwt";
+import { generateTokens, TOKEN_EXPIRY_MS, TokenExpiry } from "@/utils/jwt";
 import { verifyPassword } from "@/utils/password";
 import { TokenRepository } from "@/repositories/token.repository";
 
@@ -36,7 +36,7 @@ export async function LoginService(input: LoginInput) {
     await new TokenRepository().createRefreshToken({
       userId: user.id,
       token: tokens.refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + TOKEN_EXPIRY_MS),
     });
 
     return {
@@ -57,6 +57,8 @@ export async function LoginService(input: LoginInput) {
         },
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
+        expiresIn: TokenExpiry.ACCESS_TOKEN_EXPIRES,
+        refreshExpiresIn: TokenExpiry.REFRESH_TOKEN_EXPIRES,
       },
     };
   } catch (error) {

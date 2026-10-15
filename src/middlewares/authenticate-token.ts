@@ -1,8 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { RefreshTokenService } from "@/services/auth";
-
-const JWT_SECRET = process.env.JWT_SECRET || "access-secret";
+import {
+  generateTokens,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "@/utils/jwt";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -12,45 +15,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export function generateTokens(user: {
-  id: string;
-  email: string;
-  role?: string;
-}) {
-  const accessToken = jwt.sign(
-    { id: user.id, email: user.email, role: user.role ?? "PATIENT" },
-    JWT_SECRET,
-    { expiresIn: "7d" },
-  );
-
-  const refreshToken = jwt.sign(
-    { id: user.id, email: user.email, role: user.role ?? "PATIENT" },
-    JWT_SECRET,
-    { expiresIn: "7d" },
-  );
-
-  return { accessToken, refreshToken };
-}
-
-export function verifyAccessToken(token: string) {
-  return jwt.verify(token, JWT_SECRET) as {
-    id: string;
-    email: string;
-    role?: string;
-    iat?: number;
-    exp?: number;
-  };
-}
-
-export function verifyRefreshToken(token: string) {
-  return jwt.verify(token, JWT_SECRET) as {
-    id: string;
-    email: string;
-    role?: string;
-    iat?: number;
-    exp?: number;
-  };
-}
+export { generateTokens, verifyAccessToken, verifyRefreshToken };
 
 export async function authenticateToken(
   req: AuthenticatedRequest,
@@ -75,7 +40,7 @@ export async function authenticateToken(
 
     req.user = {
       id: decoded.id,
-      email: decoded.email,
+      email: decoded.email ?? "",
       role: decoded.role,
     };
 
