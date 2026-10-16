@@ -77,7 +77,7 @@ export async function CreatePillReminderService(
     !patientId ||
     !title ||
     Number.isNaN(scheduledAt.getTime()) ||
-    scheduledAt.getTime() <= Date.now()
+    scheduledAt.getTime() <= Date.now() - 60_000
   ) {
     return {
       code: 400,

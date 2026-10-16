@@ -24,7 +24,7 @@ export async function SignupService(
       return {
         code: 409,
         status: "error",
-        message: "Email already exists",
+        message: "Email already existed",
       };
     }
 

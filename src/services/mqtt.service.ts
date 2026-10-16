@@ -98,44 +98,41 @@ export function SendDeviceCommand(
   message: string;
   data?: {
     deviceId: string;
-    command: "FOOD" | "WATER" | "ASSISTANCE" | "EMERGENCY";
+    command: "FOOD" | "WATER" | "ASSISTANCE" | "EMERGENCY" | "SATISFIED";
   };
 }> {
-  const parsedCommand = commandValueSchema.safeParse(command.toUpperCase());
-  if (!parsedCommand.success || parsedCommand.data === "SATISFIED") {
+  const normalizedCommand = command.trim().toUpperCase();
+
+  const allowedCommands = [
+    "FOOD",
+    "WATER",
+    "ASSISTANCE",
+    "EMERGENCY",
+    "SATISFIED",
+  ] as const;
+
+  if (
+    !allowedCommands.includes(
+      normalizedCommand as (typeof allowedCommands)[number],
+    )
+  ) {
     return Promise.resolve({
       success: false,
       message: "Invalid device command",
     });
   }
 
-  const mqttCommand = parsedCommand.data as
-    | "FOOD"
-    | "WATER"
-    | "ASSISTANCE"
-    | "EMERGENCY";
-
-  // ---------------------------------------------------
-  // MQTT topic
-  // ---------------------------------------------------
+  const mqttCommand =
+    normalizedCommand as (typeof allowedCommands)[number];
 
   const topic = `carelink/device/${deviceId}/commands`;
-
-  // ---------------------------------------------------
-  // MQTT message
-  // ---------------------------------------------------
 
   const message = JSON.stringify({
     command: mqttCommand,
   });
 
-  // ---------------------------------------------------
-  // Make sure MQTT is connected
-  // ---------------------------------------------------
-
   if (!mqttClient.connected) {
     console.error("MQTT is not connected.");
-
     console.error("Command was not sent.");
 
     return Promise.resolve({
@@ -144,23 +141,36 @@ export function SendDeviceCommand(
     });
   }
 
-  // ---------------------------------------------------
-  // Publish
-  // ---------------------------------------------------
-
   return new Promise((resolve) => {
-    mqttClient.publish(topic, message, (error) => {
-      if (error) {
-        console.error("MQTT publish error:", error.message);
-        resolve({ success: false, message: "Unable to send command" });
-        return;
-      }
+    mqttClient.publish(
+      topic,
+      message,
+      { qos: 1 },
+      (error) => {
+        if (error) {
+          console.error("MQTT publish error:", error.message);
 
-      resolve({
-        success: true,
-        message: "Command sent",
-        data: { deviceId, command: mqttCommand },
-      });
-    });
+          resolve({
+            success: false,
+            message: "Unable to send command",
+          });
+
+          return;
+        }
+
+        console.log("MQTT command published:", mqttCommand);
+        console.log("MQTT topic:", topic);
+        console.log("MQTT message:", message);
+
+        resolve({
+          success: true,
+          message: "Command sent",
+          data: {
+            deviceId,
+            command: mqttCommand,
+          },
+        });
+      },
+    );
   });
 }

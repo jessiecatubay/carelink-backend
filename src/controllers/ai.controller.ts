@@ -6,6 +6,7 @@ import {
   PatientMedicationContext,
 } from "../services/ai.service";
 import { prisma } from "../lib/prisma";
+import { getPatientPresence } from "../lib/socket";
 
 const chatSchema = z.object({
   messages: z
@@ -38,6 +39,19 @@ export async function chatWithCarelink(
     const messages: AIMessage[] = parsed.data.messages;
     const requestedPatientId = parsed.data.patientId;
     const currentUserId = (req as any).user?.id as string | undefined;
+
+    const PHILIPPINE_TIME_ZONE = "Asia/Manila";
+    const now = new Date();
+    const currentDayName = now.toLocaleDateString("en-US", {
+      timeZone: PHILIPPINE_TIME_ZONE,
+      weekday: "long",
+    });
+    const currentDateFormatted = now.toLocaleDateString("en-US", {
+      timeZone: PHILIPPINE_TIME_ZONE,
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
     let patientContext: PatientMedicationContext | undefined = undefined;
 
@@ -72,18 +86,6 @@ export async function chatWithCarelink(
             orderBy: { scheduledAt: "asc" },
           });
 
-          const PHILIPPINE_TIME_ZONE = "Asia/Manila";
-          const now = new Date();
-          const currentDayName = now.toLocaleDateString("en-US", {
-            timeZone: PHILIPPINE_TIME_ZONE,
-            weekday: "long",
-          });
-          const currentDateFormatted = now.toLocaleDateString("en-US", {
-            timeZone: PHILIPPINE_TIME_ZONE,
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
           const dayOfWeekStr = now.toLocaleDateString("en-US", {
             timeZone: PHILIPPINE_TIME_ZONE,
             weekday: "short",
@@ -129,7 +131,23 @@ export async function chatWithCarelink(
             [patient.firstName, patient.lastName].filter(Boolean).join(" ").trim() ||
             "Connected Patient";
 
+          const presence = getPatientPresence(targetPatientId);
+          const isOnline = Boolean(presence?.isOnline);
+          const lastSeen = presence?.lastHeartbeat
+            ? new Date(presence.lastHeartbeat).toLocaleTimeString("en-US", {
+                timeZone: PHILIPPINE_TIME_ZONE,
+              })
+            : undefined;
+
+          const deviceId = patient.patientProfile?.deviceOwned || undefined;
+
           patientContext = {
+            isConnected: true,
+            connectionStatus: "CONNECTED",
+            isOnline,
+            lastSeen,
+            hasDevice: Boolean(deviceId),
+            deviceId,
             patientId: targetPatientId,
             patientName,
             age: patient.patientProfile?.age,
@@ -141,6 +159,17 @@ export async function chatWithCarelink(
             pillReminders: mappedReminders,
           };
         }
+      }
+
+      // If caregiver has no connected patient at all
+      if (!patientContext) {
+        patientContext = {
+          isConnected: false,
+          connectionStatus: "NOT_CONNECTED",
+          currentDayName,
+          currentDateFormatted,
+          pillReminders: [],
+        };
       }
     }
 
