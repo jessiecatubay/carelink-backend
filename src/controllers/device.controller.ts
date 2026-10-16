@@ -20,6 +20,7 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { sendPatientCaregiversNotification } from "../services/notification.service";
 import { GetUserByDeviceService } from "@/services/patientProfile";
+import { checkAndSendTemperatureAlert } from "@/services/temperature-alert.service";
 
 export class DeviceController {
   public patientVitals = async (
@@ -192,6 +193,22 @@ export class DeviceController {
           socketError,
         );
       }
+
+      // ============================================================
+      // CHECK TEMPERATURE THRESHOLDS & NOTIFY CONNECTED CAREGIVERS
+      // ============================================================
+
+      checkAndSendTemperatureAlert({
+        patientId,
+        temperature,
+        sensorContact,
+        deviceId,
+      }).catch((alertError) => {
+        console.error(
+          "Error checking/sending temperature alert:",
+          alertError,
+        );
+      });
 
       // ============================================================
       // SEND HTTP RESPONSE
