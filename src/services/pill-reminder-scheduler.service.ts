@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { emitPillReminder } from "@/lib/socket";
-import { sendPatientCaregiversNotification } from "@/services/notification.service";
+import {
+  sendPatientCaregiversNotification,
+  sendUserPushNotification,
+} from "@/services/notification.service";
 import { getNextRecurringDate } from "@/services/pill-reminder.service";
 
 const POLL_INTERVAL_MS = 30_000;
@@ -53,6 +56,16 @@ async function sendDuePillReminders() {
           reminder.createdById ? [reminder.createdById] : [],
         );
 
+        // Also send mobile push notification directly to the patient
+        try {
+          await sendUserPushNotification(reminder.patientId, {
+            ...notificationPayload,
+            title: `💊 Pill Reminder: ${pillHeader}`,
+          });
+        } catch (patientPushErr) {
+          console.warn(`Push notification to patient ${reminder.patientId} failed:`, patientPushErr);
+        }
+
         // 3. Also emit real-time socket event for active in-app sessions (caregivers + patient)
         try {
           emitPillReminder(reminder.patientId, {
@@ -60,6 +73,7 @@ async function sendDuePillReminders() {
             title: pillHeader,
             description: reminder.description,
             scheduledAt: reminder.scheduledAt.toISOString(),
+            createdById: reminder.createdById,
           });
         } catch (socketErr) {
           console.warn(`Socket emission failed for reminder ${reminder.id}:`, socketErr);

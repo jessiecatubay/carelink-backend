@@ -39,6 +39,10 @@ const patientPresence = new Map<
   }
 >();
 
+export const getPatientPresence = (patientId: string) => {
+  return patientPresence.get(patientId);
+};
+
 const PATIENT_OFFLINE_TIMEOUT = 30_000;
 
 const checkPatientOffline = (patientId: string) => {
@@ -491,6 +495,7 @@ export const emitPillReminder = (
     title: string;
     description: string | null;
     scheduledAt: string;
+    createdById?: string;
   },
 ) => {
   if (!io) {
@@ -513,6 +518,9 @@ export const emitPillReminder = (
 
   io.to(patientRoom).emit("pillReminder", eventPayload);
   io.to(userRoom).emit("pillReminder", eventPayload);
+  if (payload.createdById) {
+    io.to(`user:${payload.createdById}`).emit("pillReminder", eventPayload);
+  }
 
   console.log(`💊 Pill reminder emitted to patient ${patientId}: ${payload.title}`);
 };

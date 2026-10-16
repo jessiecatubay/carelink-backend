@@ -4,6 +4,7 @@ import {
   UpdateUserService,
   GetUserByIdService,
   GoogleAuthService,
+  CheckEmailService,
 } from "@/services/user";
 import { UserOnboardingService } from "@/services/user/user-onboarding-service";
 import { Request, Response } from "express";
@@ -20,6 +21,12 @@ import { GetMeService } from "@/services/auth/get-me-service";
 import { AuthenticatedRequest } from "@/middlewares/authenticate-token";
 
 export class UserController {
+  public checkEmail = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const result = await CheckEmailService(email);
+    return res.status(result.code).json(result);
+  };
+
   public getById = async (req: Request, res: Response) => {
     const { id } = req.body;
     console.log("fasdfasf", id);

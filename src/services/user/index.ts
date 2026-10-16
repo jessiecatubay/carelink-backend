@@ -3,3 +3,4 @@ export { SignupService } from "./signup-service"
 export { UpdateUserService } from "./update-service"
 export { GetUserByIdService } from "./get-user-by-id-service"
 export { GoogleAuthService } from "./google-auth-service";
+export { CheckEmailService } from "./check-email-service";

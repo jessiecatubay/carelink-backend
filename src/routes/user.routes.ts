@@ -11,6 +11,7 @@ import { UserController } from "../controllers/user.controller";
 const router = Router();
 const userController = new UserController();
 
+router.post("/v1/check-email", userController.checkEmail);
 router.post("/v1/signup", validateSchema(signupSchema), userController.signup);
 router.post("/v1/login", validateSchema(loginSchema), userController.login);
 router.post(

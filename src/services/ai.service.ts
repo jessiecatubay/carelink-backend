@@ -6,6 +6,12 @@ export type AIMessage = {
 };
 
 export type PatientMedicationContext = {
+  isConnected: boolean;
+  connectionStatus?: string;
+  isOnline?: boolean;
+  lastSeen?: string;
+  hasDevice?: boolean;
+  deviceId?: string;
   patientId?: string;
   patientName?: string;
   age?: number | null;
@@ -128,27 +134,40 @@ export async function getCarelinkResponse(
       });
     }
 
-    systemInstruction += `
+    if (!patientContext.isConnected) {
+      systemInstruction += `
 
 =======================================================
-PATIENT & PILL REMINDER DATABASE CONTEXT
+PATIENT CONNECTION STATUS
 =======================================================
-Patient Name: ${patientContext.patientName || "Connected Patient"}
-Age: ${patientContext.age ?? "Not specified"} | Gender: ${patientContext.gender ?? "Not specified"}
-Medical Conditions: ${patientContext.medicalConditions || "None recorded"}
-Caregiver Notes: ${patientContext.notes || "None recorded"}
-Current Date & Time Today: ${patientContext.currentDateFormatted} (${patientContext.currentDayName})
-
-${pillsSummaryText}
-
-SPECIFIC INSTRUCTIONS FOR PILL & MEDICATION INQUIRIES:
-- When the caregiver/nonpatient asks what medication to take today (or in this day), what pills the patient needs, or about their medication schedule, provide a clear, warm, organized breakdown based on the database records above.
-- Specifically list each medication title, scheduled time, and any instructions/dosage notes stored in the database.
-- If there are NO medications scheduled for today, clearly inform the caregiver that no medications are scheduled in the CareLink database for today (${patientContext.currentDayName}).
-- If there are NO pill reminders in the database for the patient at all, state that no pill reminders are currently registered in the database for ${patientContext.patientName || "this patient"}.
-- Always remind the caregiver to follow the prescribing physician's or pharmacist's specific medical instructions and to verify if unsure.
+STATUS: NO PATIENT IS CURRENTLY CONNECTED TO THIS CAREGIVER.
+- The caregiver has not linked, paired, or connected with any patient account yet.
+- If the user asks whether a patient is connected (e.g. "is my patient connected?", "do I have a patient connected?", "who is my patient?", or asks about their patient's vitals or medications):
+  Politely and clearly explain:
+  "You do not have any patient connected to your account right now. To connect with a patient, ask the patient to show their CareLink connection QR code from their device, then scan it or pair with them on your dashboard."
 =======================================================
 `;
+    } else {
+      systemInstruction += `
+
+=======================================================
+PATIENT CONNECTION & LIVE STATUS
+=======================================================
+STATUS: A PATIENT IS CURRENTLY CONNECTED TO THIS CAREGIVER.
+- Connected Patient: **${patientContext.patientName || "Connected Patient"}**
+- Pairing Status in System: CONNECTED
+- Live App Status: ${patientContext.isOnline ? "ONLINE (Active in the CareLink app right now)" : "OFFLINE (App is closed or inactive)"}
+${patientContext.lastSeen ? `- Last Active in App: ${patientContext.lastSeen}` : ""}
+- CareLink Wrist Monitor: ${patientContext.hasDevice ? `Registered (Device ID: ${patientContext.deviceId})` : "No wrist device registered yet"}
+
+CONNECTION STATUS INSTRUCTIONS:
+- If the caregiver asks if their patient is connected (e.g., "is my patient connected?", "is ${patientContext.patientName || "my patient"} connected?", "are they online?"):
+  1. Confirm clearly that **${patientContext.patientName || "your patient"}** IS connected to their caregiver account.
+  2. State their live app status (${patientContext.isOnline ? "currently online and active" : "currently offline or inactive"}).
+  3. Mention their CareLink wrist device status (${patientContext.hasDevice ? `wrist device ${patientContext.deviceId} is registered` : "no wrist device registered yet"}).
+=======================================================
+`;
+    }
   }
 
   let lastError: unknown = null;
