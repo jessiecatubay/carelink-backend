@@ -587,7 +587,7 @@ export class DeviceController {
         status: "Pending",
       };
 
-      emitPatientAlert(patientId, socketPayload);
+      emitPatientAlert(patientId, socketPayload, connectedNonpatients);
     } catch (error) {
       console.error(
         "Socket not initialized:",
@@ -622,7 +622,7 @@ export class DeviceController {
         case "EMERGENCY":
           title = "🚨 CARELINK EMERGENCY";
           body = `${patientName} needs emergency assistance.\nPatient activated the Emergency button.`;
-          channelId = "carelink-emergency-v2";
+          channelId = "carelink-emergency-v3";
           break;
       }
 

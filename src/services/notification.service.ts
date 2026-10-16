@@ -103,7 +103,7 @@ export async function sendNativeFcmEmergencyNotification(
     title: String(notification.title || "EMERGENCY ALERT"),
     body: String(notification.body || "Emergency assistance requested."),
     sound: "alert_sound.wav",
-    channelId: "carelink-emergency-v2",
+    channelId: "carelink-emergency-v3",
     timestamp: new Date().toISOString(),
   };
 
@@ -121,8 +121,18 @@ export async function sendNativeFcmEmergencyNotification(
     const response = await firebaseAdminMessaging.sendEachForMulticast({
       tokens: fcmTokens,
       data: stringData,
+      notification: {
+        title: stringData.title,
+        body: stringData.body,
+      },
       android: {
         priority: "high",
+        notification: {
+          channelId: "carelink-emergency-v3",
+          sound: "alert_sound",
+          priority: "max",
+          defaultSound: false,
+        },
       },
     });
 
@@ -157,6 +167,7 @@ export async function sendPushNotification(
   }
 
   const isEmergency =
+    notification.channelId === "carelink-emergency-v3" ||
     notification.channelId === "carelink-emergency-v2" ||
     (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
     (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
@@ -168,7 +179,7 @@ export async function sendPushNotification(
       return {
         to: token,
         priority: "high" as const,
-        channelId: "carelink-emergency-v2",
+        channelId: "carelink-emergency-v3",
         data: {
           ...(notification.data ?? {}),
           command: "EMERGENCY",
@@ -241,6 +252,7 @@ export async function sendUserPushNotification(
   console.log("User push tokens:", pushTokens);
 
   const isEmergency =
+    notification.channelId === "carelink-emergency-v3" ||
     notification.channelId === "carelink-emergency-v2" ||
     (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
     (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
@@ -253,8 +265,7 @@ export async function sendUserPushNotification(
       .map((item) => item.token);
 
     if (fcmTokens.length > 0) {
-      const fcmSuccess = await sendNativeFcmEmergencyNotification(fcmTokens, notification);
-      if (fcmSuccess) return true;
+      await sendNativeFcmEmergencyNotification(fcmTokens, notification);
     }
   }
 
@@ -337,6 +348,7 @@ export async function sendPatientCaregiversNotification(
   console.log("Caregiver tokens found (deduplicated):", caregiverTokens);
 
   const isEmergency =
+    notification.channelId === "carelink-emergency-v3" ||
     notification.channelId === "carelink-emergency-v2" ||
     (notification.data?.command as string)?.toUpperCase() === "EMERGENCY" ||
     (notification.data?.type as string)?.toUpperCase() === "EMERGENCY" ||
@@ -352,29 +364,22 @@ export async function sendPatientCaregiversNotification(
       )
     );
 
-    let fcmSent = false;
     if (fcmTokens.length > 0) {
-      fcmSent = await sendNativeFcmEmergencyNotification(fcmTokens, notification);
+      await sendNativeFcmEmergencyNotification(fcmTokens, notification);
     }
 
-    // Caregivers who don't have an FCM token fallback to Expo Push
-    const usersWithFcm = new Set(
-      caregiverTokens
-        .filter((item) => item.platform === "android-fcm")
-        .map((item) => item.userId)
-    );
-
-    const fallbackExpoTokens = Array.from(
+    // Always send high-priority emergency push to all caregivers with valid Expo tokens
+    const expoTokens = Array.from(
       new Set(
         caregiverTokens
-          .filter((item) => (!usersWithFcm.has(item.userId) || !fcmSent) && Expo.isExpoPushToken(item.token))
           .map((item) => item.token)
+          .filter((token) => Expo.isExpoPushToken(token))
       )
     );
 
-    if (fallbackExpoTokens.length > 0) {
-      console.log("Sending emergency fallback Expo push to:", fallbackExpoTokens);
-      await sendPushNotification(fallbackExpoTokens, notification);
+    if (expoTokens.length > 0) {
+      console.log("Sending emergency Expo push to all connected caregivers:", expoTokens);
+      await sendPushNotification(expoTokens, notification);
     }
   } else {
     // Normal notifications (Food, Water, Assistance, Pill Reminder): use standard Expo push

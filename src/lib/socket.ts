@@ -372,6 +372,7 @@ export const emitPatientVitals = (
 export const emitPatientAlert = (
   patientId: string,
   payload: Record<string, any>,
+  caregiverIds: string[] = [],
 ) => {
   if (!io) {
     console.warn("Socket.io is not initialized");
@@ -385,9 +386,17 @@ export const emitPatientAlert = (
     patientId,
   });
 
-  console.log(payload);
+  // Also broadcast directly to each connected caregiver's personal user room
+  for (const caregiverId of caregiverIds) {
+    if (caregiverId) {
+      io.to(`user:${caregiverId}`).emit("patientAlert", {
+        ...payload,
+        patientId,
+      });
+    }
+  }
 
-  console.log(`🚨 Alert emitted to ${room}`);
+  console.log(`🚨 Alert emitted to ${room} and ${caregiverIds.length} direct caregiver user rooms`);
 };
 
 /**
